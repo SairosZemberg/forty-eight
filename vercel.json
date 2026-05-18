@@ -1,39 +1,2099 @@
-{
-  "version": 2,
-  "name": "superproductivity-app",
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>SuperProdutividade — Neon Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3VwZXJQcm9kdXRpdmlkYWRlIiwic2hvcnRfbmFtZSI6IlN1cGVyUHJvZCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBhMGEwZiIsInRoZW1lX2NvbG9yIjoiIzBhMGEwZiJ9">
+  <style>
+    :root {
+      --bg: #0a0a0f;
+      --bg2: #12121a;
+      --surface: rgba(18, 18, 30, 0.7);
+      --surface-solid: #12121e;
+      --text: #e2e8f0;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --neon-cyan: #00f0ff;
+      --neon-magenta: #ff00ff;
+      --neon-green: #39ff14;
+      --neon-purple: #b026ff;
+      --neon-yellow: #fff01f;
+      --neon-orange: #ff9e00;
+      --neon-red: #ff2a6d;
+      --border: rgba(0, 240, 255, 0.15);
+      --border2: rgba(0, 240, 255, 0.08);
+      --shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+      --radius: 12px;
+      --radius-lg: 20px;
+      --font-display: 'Orbitron', sans-serif;
+      --font-body: 'Rajdhani', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Animated background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 50% 50%, rgba(176, 38, 255, 0.08) 0%, transparent 50%);
+      animation: rotateGlow 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes rotateGlow {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    button {
+      font-family: var(--font-body);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    input, select, textarea {
+      font-family: var(--font-body);
+      outline: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.625rem 0.875rem;
+      font-size: 0.9375rem;
+      background: var(--surface);
+      color: var(--text);
+      width: 100%;
+      backdrop-filter: blur(10px);
+    }
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.05);
+    }
+    input::placeholder { color: var(--text3); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg2); }
+    ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
+
+    /* Layout */
+    .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
+    .sidebar {
+      position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
+      background: rgba(10, 10, 15, 0.85);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      padding: 1.25rem 1rem;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+    }
+    .brand {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 0.75rem 0.75rem 1.5rem;
+      border-bottom: 1px solid var(--border2);
+      margin-bottom: 1rem;
+    }
+    .brand span:first-child { font-size: 1.75rem; filter: drop-shadow(0 0 8px var(--neon-cyan)); }
+    .brand span:last-child {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.125rem;
+      letter-spacing: 0.05em;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+    .nav-links { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .nav-link {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      font-size: 0.9375rem;
+      font-weight: 600;
+      color: var(--text2);
+      text-decoration: none;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+    }
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0; width: 3px;
+      background: var(--neon-cyan);
+      border-radius: 0 4px 4px 0;
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    .nav-link:hover {
+      background: rgba(0, 240, 255, 0.08);
+      color: var(--neon-cyan);
+      border-color: rgba(0, 240, 255, 0.2);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+    }
+    .nav-link:hover::before { transform: scaleY(1); }
+    .nav-link.active {
+      background: rgba(0, 240, 255, 0.12);
+      color: var(--neon-cyan);
+      border-color: rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
+    }
+    .nav-link.active::before { transform: scaleY(1); }
+    .nav-link svg { width: 20px; height: 20px; }
+    .main-content { flex: 1; margin-left: 240px; padding: 1.5rem; max-width: 1100px; }
+
+    /* Header */
+    .header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 2rem; padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border2);
+    }
+    .header h1 {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.02em;
+    }
+    .user-badge {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+      font-family: var(--font-mono);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex; gap: 0.5rem;
+      margin-bottom: 2rem;
+      background: var(--surface);
+      padding: 0.5rem;
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow), 0 0 30px rgba(0, 240, 255, 0.05);
+      border: 1px solid var(--border);
+      overflow-x: auto;
+      backdrop-filter: blur(10px);
+    }
+    .tab-btn {
+      position: relative;
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text2);
+      white-space: nowrap;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+      overflow: hidden;
+    }
+    .tab-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 50%; right: 50%;
+      height: 2px;
+      background: var(--neon-cyan);
+      transition: all 0.3s ease;
+    }
+    .tab-btn:hover {
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.08);
+      border-color: rgba(0, 240, 255, 0.2);
+    }
+    .tab-btn:hover::after { left: 20%; right: 20%; }
+    .tab-btn.active {
+      color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.12);
+      border-color: rgba(0, 240, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+    }
+    .tab-btn.active::after { left: 10%; right: 10%; }
+    .tab-btn svg { width: 18px; height: 18px; }
+
+    /* Panels */
+    .panel {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      box-shadow: var(--shadow), 0 0 40px rgba(0, 240, 255, 0.05);
+      border: 1px solid var(--border);
+      min-height: 500px;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      opacity: 0.5;
+    }
+    .panel h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      color: var(--neon-cyan);
+      letter-spacing: 0.05em;
+    }
+
+    /* Forms */
+    .form-row { display: flex; gap: 0.875rem; margin-bottom: 0.875rem; }
+    .form-row input, .form-row select { flex: 1; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      color: var(--bg);
+      padding: 0.625rem 1.5rem;
+      border-radius: var(--radius);
+      font-weight: 700;
+      font-size: 0.9375rem;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      font-family: var(--font-display);
+      letter-spacing: 0.03em;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%; width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s ease;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5), 0 0 60px rgba(176, 38, 255, 0.2);
+    }
+    .btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-icon {
+      padding: 0.5rem;
+      color: var(--text3);
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      transition: all 0.3s ease;
+    }
+    .btn-icon:hover {
+      color: var(--neon-red);
+      background: rgba(255, 42, 109, 0.1);
+      border-color: rgba(255, 42, 109, 0.3);
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.2);
+      transform: rotate(5deg);
+    }
+
+    /* Cards */
+    .card {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.125rem;
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.625rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: default;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 3px; height: 100%;
+      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .card:hover {
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), 0 0 50px rgba(176, 38, 255, 0.08);
+      border-color: rgba(0, 240, 255, 0.4);
+      transform: translateX(4px);
+    }
+    .card:hover::before { opacity: 1; }
+    .card.completed { opacity: 0.5; }
+    .card.completed h4 { text-decoration: line-through; color: var(--text3); }
+    .card-info { display: flex; align-items: center; gap: 0.875rem; flex: 1; }
+    .check-btn {
+      width: 24px; height: 24px;
+      border: 2px solid var(--border);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--neon-green);
+      font-size: 0.875rem; flex-shrink: 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .check-btn:hover {
+      border-color: var(--neon-green);
+      box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
+    }
+    .check-btn.checked {
+      background: var(--neon-green);
+      border-color: var(--neon-green);
+      color: var(--bg);
+      box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
+    }
+    .card h4 { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text); }
+    .card-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--text3); font-family: var(--font-mono); }
+    .badge {
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--radius);
+      color: var(--neon-cyan);
+      font-size: 0.6875rem;
+      font-weight: 600;
+    }
+
+    /* Finance */
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; }
+    .stat-card {
+      display: flex; align-items: center; gap: 1rem;
+      padding: 1.25rem;
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .stat-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .stat-card.income { border-left: 3px solid var(--neon-green); }
+    .stat-card.income:hover { box-shadow: 0 0 25px rgba(57, 255, 20, 0.15); }
+    .stat-card.expense { border-left: 3px solid var(--neon-red); }
+    .stat-card.expense:hover { box-shadow: 0 0 25px rgba(255, 42, 109, 0.15); }
+    .stat-card.balance.positive { border-left: 3px solid var(--neon-green); }
+    .stat-card.balance.negative { border-left: 3px solid var(--neon-red); }
+    .stat-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-display); }
+    .stat-value { font-size: 1.25rem; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
+    .type-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.875rem; }
+    .type-toggle button {
+      flex: 1; padding: 0.625rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      font-family: var(--font-display);
+      letter-spacing: 0.03em;
+      transition: all 0.3s ease;
+    }
+    .type-toggle button:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
+    }
+    .type-toggle button.active {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      color: var(--bg);
+      border-color: transparent;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+    .entry-card {
+      display: flex; justify-content: space-between;
+      padding: 1rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 0.625rem;
+      background: rgba(18, 18, 30, 0.6);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .entry-card:hover {
+      transform: translateX(4px);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+    }
+    .entry-card.income { border-left: 3px solid var(--neon-green); }
+    .entry-card.expense { border-left: 3px solid var(--neon-red); }
+    .entry-amount { font-family: var(--font-mono); font-weight: 700; font-size: 1rem; }
+    .entry-amount.income { color: var(--neon-green); text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
+    .entry-amount.expense { color: var(--neon-red); text-shadow: 0 0 10px rgba(255, 42, 109, 0.3); }
+
+    /* Pomodoro */
+    .pomodoro { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; padding: 1rem; }
+    .presets { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+    .preset {
+      display: flex; flex-direction: column; align-items: center; gap: 0.375rem;
+      padding: 1rem 1.5rem;
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text2);
+      cursor: pointer;
+      font-family: var(--font-display);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .preset::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: -1;
+    }
+    .preset:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .preset.active {
+      color: var(--bg);
+      border-color: transparent;
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+    }
+    .preset.active::before { opacity: 1; }
+    .timer-circle { position: relative; width: 280px; height: 280px; }
+    .timer-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3)); }
+    .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .timer-text span {
+      font-family: var(--font-mono);
+      font-size: 4rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.3));
+    }
+    .timer-controls { display: flex; gap: 1.5rem; }
+    .ctrl-btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 64px; height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      color: var(--bg);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .ctrl-btn:hover {
+      transform: scale(1.1);
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
+    }
+    .ctrl-btn:active { transform: scale(0.95); }
+    .ctrl-btn.ghost {
+      background: rgba(18, 18, 30, 0.6);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+    .ctrl-btn.ghost:hover {
+      border-color: var(--neon-cyan);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+    }
+
+    /* Kanban */
+    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .column {
+      background: rgba(18, 18, 30, 0.4);
+      border-radius: var(--radius);
+      padding: 1rem;
+      border: 1px solid var(--border2);
+      backdrop-filter: blur(10px);
+    }
+    .col-header {
+      display: flex; align-items: center; gap: 0.625rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid;
+      margin-bottom: 0.75rem;
+    }
+    .col-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+    .col-header h4 { font-family: var(--font-display); font-size: 0.875rem; font-weight: 600; flex: 1; letter-spacing: 0.03em; }
+    .col-count {
+      font-size: 0.75rem; color: var(--text3);
+      background: rgba(0, 240, 255, 0.1);
+      padding: 0.25rem 0.625rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+    }
+    .task-card {
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.875rem;
+      margin-bottom: 0.625rem;
+      cursor: grab;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .task-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .task-card:hover {
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
+      border-color: rgba(0, 240, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .task-card:hover::before { opacity: 1; }
+    .task-card.completed { opacity: 0.5; }
+    .task-card.completed .task-title { text-decoration: line-through; color: var(--text3); }
+
+    /* Radar */
+    .radar-container { width: 100%; max-width: 450px; aspect-ratio: 1; margin: 0 auto; }
+    .skill-legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
+    .skill-item {
+      display: flex; align-items: center; gap: 0.625rem;
+      font-size: 0.875rem;
+      padding: 0.5rem 0.75rem;
+      background: rgba(0, 240, 255, 0.05);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      font-family: var(--font-mono);
+    }
+    .skill-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
+
+    /* Chat */
+    .chat {
+      display: flex; flex-direction: column;
+      height: calc(100vh - 120px);
+      max-width: 750px;
+      margin: 0 auto;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      box-shadow: var(--shadow), 0 0 50px rgba(0, 240, 255, 0.05);
+      backdrop-filter: blur(20px);
+    }
+    .chat-header {
+      display: flex; align-items: center; gap: 0.75rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(0, 240, 255, 0.05);
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-header h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; letter-spacing: 0.03em; }
+    .messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+    .message { display: flex; gap: 0.875rem; max-width: 80%; }
+    .message.own { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.125rem;
+      flex-shrink: 0;
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
+    }
+    .msg-content {
+      display: flex; flex-direction: column; gap: 0.375rem;
+      background: rgba(18, 18, 30, 0.8);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      border-bottom-left-radius: 4px;
+      border: 1px solid var(--border2);
+      backdrop-filter: blur(10px);
+    }
+    .message.own .msg-content {
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(176, 38, 255, 0.15));
+      color: var(--text);
+      border-bottom-left-radius: var(--radius);
+      border-bottom-right-radius: 4px;
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+    .msg-sender { font-size: 0.75rem; font-weight: 600; color: var(--neon-cyan); font-family: var(--font-display); }
+    .message.own .msg-sender { color: var(--neon-magenta); }
+    .msg-time { font-size: 0.6875rem; color: var(--text3); align-self: flex-end; font-family: var(--font-mono); }
+    .chat-input-area {
+      display: flex; gap: 0.75rem;
+      padding: 1rem 1.25rem;
+      border-top: 1px solid var(--border);
+      background: rgba(18, 18, 30, 0.6);
+    }
+    .chat-input {
+      flex: 1;
+      border: 1px solid var(--border);
+      background: rgba(18, 18, 30, 0.8);
+      color: var(--text);
+    }
+    .chat-input:focus { background: rgba(18, 18, 30, 0.9); }
+    .send-btn {
+      padding: 0.75rem;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      color: var(--bg);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+    .send-btn:hover {
+      transform: scale(1.1) rotate(-5deg);
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+    }
+
+    /* Community */
+    .profiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+    .profile-card {
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      display: flex; flex-direction: column; align-items: center; gap: 1rem;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .profile-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .profile-card:hover {
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.3);
+      border-color: rgba(0, 240, 255, 0.3);
+      transform: translateY(-5px);
+    }
+    .profile-card:hover::before { opacity: 1; }
+    .prof-avatar {
+      position: relative;
+      width: 72px; height: 72px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 240, 255, 0.1);
+      border-radius: 50%;
+      font-size: 2.25rem;
+      border: 2px solid var(--border);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    .profile-card:hover .prof-avatar {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+      transform: scale(1.05);
+    }
+    .prof-status {
+      position: absolute; bottom: 3px; right: 3px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      border: 3px solid var(--bg);
+    }
+    .prof-status.online { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+    .prof-status.offline { background: var(--text3); }
+    .profile-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; }
+    .prof-actions { display: flex; gap: 0.625rem; width: 100%; }
+    .prof-actions button {
+      flex: 1; padding: 0.625rem;
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      background: rgba(18, 18, 30, 0.6);
+      color: var(--text2);
+      font-family: var(--font-display);
+      transition: all 0.3s ease;
+    }
+    .prof-actions button:first-child {
+      color: var(--neon-cyan);
+      border-color: rgba(0, 240, 255, 0.3);
+    }
+    .prof-actions button:first-child:hover {
+      background: rgba(0, 240, 255, 0.1);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+      transform: translateY(-2px);
+    }
+    .prof-actions button:last-child { color: var(--text3); }
+    .prof-actions button:last-child:hover {
+      color: var(--neon-red);
+      border-color: rgba(255, 42, 109, 0.3);
+      background: rgba(255, 42, 109, 0.1);
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.15);
+      transform: translateY(-2px);
+    }
+
+    /* Presence */
+    .presence {
+      position: fixed; right: 0; top: 0;
+      width: 220px; height: 100vh;
+      background: rgba(10, 10, 15, 0.85);
+      border-left: 1px solid var(--border);
+      padding: 1.25rem 0.75rem;
+      overflow-y: auto;
+      backdrop-filter: blur(20px);
+      z-index: 100;
+    }
+    .presence h4 {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--neon-cyan);
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+    .pres-user {
+      display: flex; align-items: center; gap: 0.875rem;
+      padding: 0.625rem;
+      border-radius: var(--radius);
+      transition: all 0.3s ease;
+      border: 1px solid transparent;
+    }
+    .pres-user:hover {
+      background: rgba(0, 240, 255, 0.05);
+      border-color: rgba(0, 240, 255, 0.2);
+    }
+    .pres-avatar {
+      position: relative;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0, 240, 255, 0.1);
+      border-radius: 50%;
+      font-size: 1.25rem;
+      border: 1px solid var(--border2);
+    }
+    .pres-ping {
+      position: absolute; bottom: -2px; right: -2px;
+      width: 12px; height: 12px;
+      background: var(--neon-green);
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      box-shadow: 0 0 10px var(--neon-green);
+      animation: ping 2s ease-in-out infinite;
+    }
+    @keyframes ping { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+    .pres-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .pres-status { font-size: 0.75rem; color: var(--text3); font-family: var(--font-mono); }
+
+    /* Connection Manager */
+    .conn-manager { max-width: 750px; margin: 0 auto; }
+    .conn-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1.75rem; padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border2);
+    }
+    .mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
+    .mode-card {
+      padding: 1.5rem;
+      background: rgba(18, 18, 30, 0.6);
+      border: 2px solid var(--border);
+      border-radius: var(--radius-lg);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .mode-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(176, 38, 255, 0.05));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .mode-card:hover {
+      border-color: var(--neon-cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15);
+    }
+    .mode-card:hover::before { opacity: 1; }
+    .mode-card.active {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.05);
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05);
+    }
+    .mode-card.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.8); }
+    .mode-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.375rem; }
+    .mode-card p { font-size: 0.8125rem; color: var(--text3); }
+
+    /* Contact Form (Formspree) */
+    .contact-panel {
+      background: rgba(18, 18, 30, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      margin-top: 1.5rem;
+      backdrop-filter: blur(20px);
+      position: relative;
+      overflow: hidden;
+    }
+    .contact-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--neon-magenta), transparent);
+      opacity: 0.5;
+    }
+    .contact-panel h4 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--neon-magenta);
+      margin-bottom: 1rem;
+      letter-spacing: 0.05em;
+    }
+    .contact-panel p { color: var(--text2); font-size: 0.875rem; margin-bottom: 1rem; }
+    .contact-panel input, .contact-panel textarea {
+      margin-bottom: 0.75rem;
+      border-color: rgba(255, 0, 255, 0.2);
+    }
+    .contact-panel input:focus, .contact-panel textarea:focus {
+      border-color: var(--neon-magenta);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
+    }
+    .btn-magenta {
+      background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
+      border: 1px solid rgba(255, 0, 255, 0.3);
+    }
+    .btn-magenta:hover {
+      box-shadow: 0 0 30px rgba(255, 0, 255, 0.5), 0 0 60px rgba(176, 38, 255, 0.2);
+    }
+
+    /* Neon glow text */
+    .neon-text {
+      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+    }
+
+    /* Responsive */
+    @media (max-width: 1200px) {
+      .sidebar { width: 80px; align-items: center; padding: 1rem 0.5rem; }
+      .brand span:last-child, .nav-link span { display: none; }
+      .brand { justify-content: center; padding: 0.75rem 0.25rem 1.25rem; }
+      .main-content { margin-left: 80px; margin-right: 0; }
+      .presence { display: none; }
+      .kanban { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar {
+        width: 100%; height: auto; bottom: 0; top: auto;
+        flex-direction: row; padding: 0.625rem;
+        border-right: none; border-top: 1px solid var(--border);
+        backdrop-filter: blur(30px);
+      }
+      .brand { display: none; }
+      .nav-links { flex-direction: row; width: 100%; justify-content: space-around; }
+      .main-content { margin-left: 0; margin-bottom: 70px; padding: 1rem; }
+      .mode-grid { grid-template-columns: 1fr; }
+      .header { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    }
+
+    /* Animations */
+    .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-in { animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.2); }
+      50% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.4), 0 0 60px rgba(176, 38, 255, 0.2); }
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <div class="brand">
+        <span>🦁</span>
+        <span>SuperProd</span>
+      </div>
+      <div class="nav-links">
+        <a class="nav-link active" onclick="showPage('office')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Escritório</span>
+        </a>
+        <a class="nav-link" onclick="showPage('chat')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+          <span>Chat</span>
+        </a>
+        <a class="nav-link" onclick="showPage('community')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Comunidade</span>
+        </a>
+        <a class="nav-link" onclick="showPage('skills')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Habilidades</span>
+        </a>
+        <a class="nav-link" onclick="showPage('connect')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+          <span>Conectar</span>
+        </a>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Office Page -->
+      <div id="page-office" class="page">
+        <div class="header">
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <h1>📝 Escritório</h1>
+            <span class="user-badge pulse-glow" id="user-badge">🦁 Carregando...</span>
+          </div>
+          <canvas id="mini-radar" width="100" height="100"></canvas>
+        </div>
+
+        <div class="tabs">
+          <button class="tab-btn active" onclick="showTab('routines')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Rotinas</span>
+          </button>
+          <button class="tab-btn" onclick="showTab('finance')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>Finanças</span>
+          </button>
+          <button class="tab-btn" onclick="showTab('pomodoro')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Pomodoro</span>
+          </button>
+          <button class="tab-btn" onclick="showTab('checklist')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>Checklist</span>
+          </button>
+          <button class="tab-btn" onclick="showTab('library')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span>Biblioteca</span>
+          </button>
+        </div>
+
+        <div class="panel" id="panel-routines">
+          <div style="background:var(--surface);padding:1.5rem;border-radius:var(--radius);margin-bottom:1.25rem;border:1px solid var(--border);backdrop-filter:blur(10px);">
+            <h3>Nova Rotina</h3>
+            <div class="form-row">
+              <input type="text" id="routine-title" placeholder="Nome da rotina...">
+              <input type="time" id="routine-time" value="08:00" style="width:120px;">
+            </div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.875rem;" id="days-selector"></div>
+            <div style="display:flex;gap:0.875rem;align-items:center;margin-bottom:0.875rem;">
+              <button id="alarm-toggle" class="btn-primary" style="background:var(--surface-solid);color:var(--text2);box-shadow:none;border:1px solid var(--border);" onclick="toggleAlarm()">
+                <span id="alarm-icon">🔔</span> Alarme ativo
+              </button>
+              <select id="alarm-sound">
+                <option value="gentle">Suave</option>
+                <option value="alert">Alerta</option>
+                <option value="chime">Sino</option>
+              </select>
+            </div>
+            <button class="btn-primary" onclick="addRoutine()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar Rotina
+            </button>
+          </div>
+          <div id="routines-list"></div>
+        </div>
+
+        <div class="panel" id="panel-finance" style="display:none;">
+          <div class="stats" id="finance-stats"></div>
+          <div style="background:var(--surface);padding:1.5rem;border-radius:var(--radius);margin-bottom:1.25rem;border:1px solid var(--border);backdrop-filter:blur(10px);">
+            <div class="type-toggle">
+              <button class="active" onclick="setFinanceType('expense')">Saída</button>
+              <button onclick="setFinanceType('income')">Entrada</button>
+            </div>
+            <div class="form-row">
+              <input type="number" id="finance-amount" placeholder="Valor (R$)" step="0.01">
+              <input type="text" id="finance-desc" placeholder="Descrição">
+            </div>
+            <div class="form-row">
+              <select id="finance-cat">
+                <option>Alimentação</option><option>Transporte</option><option>Moradia</option>
+                <option>Lazer</option><option>Saúde</option><option>Educação</option><option>Outros</option>
+              </select>
+              <input type="date" id="finance-date">
+            </div>
+            <button class="btn-primary" onclick="addFinance()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar Lançamento
+            </button>
+          </div>
+          <div id="finance-list"></div>
+        </div>
+
+        <div class="panel" id="panel-pomodoro" style="display:none;">
+          <div class="pomodoro">
+            <div class="presets">
+              <button class="preset active" onclick="setPomodoro(25)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/></svg>
+                <span>Foco</span><small>25min</small>
+              </button>
+              <button class="preset" onclick="setPomodoro(5)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                <span>Pausa Curta</span><small>5min</small>
+              </button>
+              <button class="preset" onclick="setPomodoro(15)">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+                <span>Pausa Longa</span><small>15min</small>
+              </button>
+            </div>
+            <div class="timer-circle">
+              <svg viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0,240,255,0.1)" stroke-width="3"/>
+                <circle id="timer-progress" cx="50" cy="50" r="45" fill="none" stroke="url(#timerGradient)" stroke-width="3" stroke-linecap="round"
+                  stroke-dasharray="283" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                <defs>
+                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#00f0ff"/>
+                    <stop offset="100%" style="stop-color:#ff00ff"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+              <div class="timer-text"><span id="timer-display">25:00</span></div>
+            </div>
+            <div class="timer-controls">
+              <button class="ctrl-btn" id="timer-play" onclick="toggleTimer()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+              <button class="ctrl-btn ghost" onclick="resetTimer()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+              </button>
+            </div>
+            <div style="display:flex;gap:2rem;font-size:0.9375rem;color:var(--text2);font-family:var(--font-mono);">
+              <span style="color:var(--neon-green);text-shadow:0 0 10px rgba(57,255,20,0.3);">✅ <span id="pomodoro-cycles">0</span> ciclos hoje</span>
+              <span style="color:var(--neon-cyan);text-shadow:0 0 10px rgba(0,240,255,0.3);">🧠 <span id="pomodoro-sessions">0</span> sessões</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="panel-checklist" style="display:none;">
+          <div style="display:flex;gap:0.875rem;margin-bottom:1.25rem;">
+            <input type="text" id="task-input" placeholder="Adicionar nova tarefa..." style="flex:1;">
+            <button class="btn-primary" onclick="addTask()">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Adicionar
+            </button>
+          </div>
+          <div class="kanban" id="kanban-board"></div>
+        </div>
+
+        <div class="panel" id="panel-library" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn-primary" style="background:var(--surface-solid);color:var(--text2);box-shadow:none;border:1px solid var(--border);" onclick="document.getElementById('file-upload').click()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Upload
+              </button>
+              <input type="file" id="file-upload" multiple accept=".pdf,.txt,.png,.jpg" style="display:none;" onchange="handleFileUpload(event)">
+            </div>
+          </div>
+          <div id="files-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1.25rem;"></div>
+        </div>
+      </div>
+
+      <!-- Chat Page -->
+      <div id="page-chat" class="page" style="display:none;">
+        <div class="chat">
+          <div class="chat-header">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 10px var(--neon-green);"></span>
+            <h3>💬 Chat em Tempo Real</h3>
+          </div>
+          <div class="messages" id="chat-messages"></div>
+          <div class="chat-input-area">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter')sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Community Page -->
+      <div id="page-community" class="page" style="display:none;">
+        <div class="header">
+          <h1>👥 Comunidade</h1>
+          <div style="display:flex;align-items:center;gap:0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:0.625rem 1rem;width:320px;backdrop-filter:blur(10px);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Buscar usuários..." style="border:none;padding:0;background:transparent;color:var(--text);" oninput="filterProfiles(this.value)">
+          </div>
+        </div>
+        <div class="profiles" id="profiles-grid"></div>
+      </div>
+
+      <!-- Skills Page -->
+      <div id="page-skills" class="page" style="display:none;">
+        <div class="header"><h1>📊 Habilidades</h1></div>
+        <div class="panel" style="text-align:center;">
+          <canvas id="radar-chart" width="450" height="450" style="max-width:450px;margin:0 auto;"></canvas>
+          <div class="skill-legend" id="skill-legend"></div>
+        </div>
+      </div>
+
+      <!-- Connect Page -->
+      <div id="page-connect" class="page" style="display:none;">
+        <div class="header"><h1>🔗 Conectar</h1></div>
+        <div class="conn-manager">
+          <div class="conn-header">
+            <h3 style="font-family:var(--font-display);font-size:1.125rem;color:var(--neon-cyan);">Modo de Conexão</h3>
+            <div class="connection-status offline" id="conn-status" style="display:flex;align-items:center;gap:0.5rem;color:var(--neon-red);font-family:var(--font-mono);font-size:0.875rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+              <span>Offline</span>
+            </div>
+          </div>
+          <div class="mode-grid">
+            <div class="mode-card active" onclick="setConnectionMode('local')">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <h4>Modo Local</h4>
+              <p>100% offline. Tudo no navegador.</p>
+            </div>
+            <div class="mode-card" onclick="setConnectionMode('p2p')">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b026ff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+              <h4>WebRTC P2P</h4>
+              <p>Direto entre navegadores.</p>
+            </div>
+            <div class="mode-card disabled">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#39ff14" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+              <h4>Google Sheets</h4>
+              <p>Planilha como backend.</p>
+            </div>
+            <div class="mode-card disabled">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff01f" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+              <h4>Firebase</h4>
+              <p>Backend real-time grátis.</p>
+            </div>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;backdrop-filter:blur(10px);">
+            <h4 style="font-family:var(--font-display);font-size:1rem;color:var(--neon-cyan);margin-bottom:0.75rem;">📋 Instruções</h4>
+            <p style="color:var(--text2);font-size:0.9375rem;margin:0.5rem 0 1.25rem;line-height:1.6;">
+              No momento você está no <strong style="color:var(--neon-cyan);">Modo Local</strong>. Todos os dados ficam apenas no seu navegador.
+              Para sincronizar entre dispositivos, configure Firebase ou Google Apps Script no arquivo .env
+            </p>
+            <div style="background:var(--bg2);padding:1rem 1.25rem;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.8125rem;border:1px solid var(--border2);color:var(--neon-cyan);">
+              VITE_FIREBASE_API_KEY=AIza...<br>
+              VITE_FIREBASE_PROJECT_ID=seu-projeto
+            </div>
+          </div>
+
+          <!-- Formspree Contact Form -->
+          <div class="contact-panel">
+            <h4>📨 Fale Conosco</h4>
+            <p>Encontrou um bug, tem uma sugestão futurista ou quer colaborar? Envie uma mensagem!</p>
+            <form action="https://formspree.io/f/mojbvqyq" method="POST">
+              <input type="text" name="name" placeholder="Seu nome" required>
+              <input type="email" name="email" placeholder="Seu e-mail" required>
+              <textarea name="message" rows="4" placeholder="Sua mensagem..." required></textarea>
+              <input type="hidden" name="_replyto" value="antonny135121215@proton.me">
+              <button type="submit" class="btn-primary btn-magenta" style="width:100%;justify-content:center;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                Enviar Mensagem
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Presence Bar -->
+    <aside class="presence">
+      <h4>Online</h4>
+      <div id="presence-list"></div>
+    </aside>
+  </div>
+
+<script>
+// ============================================
+// SUPERPRODUTIVIDADE - NEON EDITION
+// ============================================
+
+// ===== UTILITÁRIOS =====
+const $ = id => document.getElementById(id);
+const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const ALLOWED_ANIMALS = ['🦁','🐯','🐱','🐆','🐅','🐈','🐈‍⬛','🐝','🦋','🐜','🐞','🦗','🪲','🪳','🦟','🪰'];
+const ADJECTIVES = ['Veloz','Astuto','Brilhante','Feroz','Ágil','Nobre','Místico','Radiante','Sábio','Corajoso'];
+
+function generateUser() {
+  const emoji = ALLOWED_ANIMALS[Math.floor(Math.random() * ALLOWED_ANIMALS.length)];
+  const name = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)] + ' ' + emoji;
+  return { id: 'user-' + Date.now(), name, emoji, createdAt: Date.now() };
+}
+
+function formatCurrency(v) {
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+}
+
+function formatTime(sec) {
+  const m = Math.floor(sec / 60).toString().padStart(2, '0');
+  const s = (sec % 60).toString().padStart(2, '0');
+  return m + ':' + s;
+}
+
+function autoCategorize(desc) {
+  const cats = {
+    'Alimentação': ['mercado','restaurante','lanche','pizza','ifood'],
+    'Transporte': ['uber','99','taxi','ônibus','gasolina'],
+    'Moradia': ['aluguel','condomínio','luz','água','internet'],
+    'Lazer': ['cinema','show','bar','viagem','netflix'],
+    'Saúde': ['farmácia','remédio','médico','academia'],
+    'Educação': ['curso','livro','faculdade','escola']
+  };
+  const d = desc.toLowerCase();
+  for (const [cat, keys] of Object.entries(cats)) {
+    if (keys.some(k => d.includes(k))) return cat;
+  }
+  return 'Outros';
+}
+
+// ===== ESTADO GLOBAL =====
+let state = {
+  user: null,
+  routines: [],
+  finances: [],
+  pomodoro: { sessions: [], cycles: 0 },
+  checklist: [],
+  files: [],
+  chat: [],
+  profiles: [],
+  presence: [],
+  skills: { execution: 10, focus: 10, discipline: 10, organization: 10, consistency: 10 },
+  currentTab: 'routines',
+  financeType: 'expense',
+  alarmEnabled: true,
+  pomodoroRunning: false,
+  pomodoroTime: 25 * 60,
+  pomodoroDuration: 25 * 60,
+  timerWorker: null
+};
+
+// ===== PERSISTÊNCIA =====
+function saveState() {
+  const toSave = {
+    user: state.user,
+    routines: state.routines,
+    finances: state.finances,
+    pomodoro: state.pomodoro,
+    checklist: state.checklist,
+    files: state.files.map(f => ({ id: f.id, name: f.name, size: f.size, uploadedAt: f.uploadedAt })),
+    chat: state.chat,
+    skills: state.skills
+  };
+  localStorage.setItem('superprod_state', JSON.stringify(toSave));
+}
+
+function loadState() {
+  const saved = localStorage.getItem('superprod_state');
+  if (saved) {
+    const data = JSON.parse(saved);
+    if (data.user) state.user = data.user;
+    if (data.routines) state.routines = data.routines;
+    if (data.finances) state.finances = data.finances;
+    if (data.pomodoro) state.pomodoro = data.pomodoro;
+    if (data.checklist) state.checklist = data.checklist;
+    if (data.skills) state.skills = data.skills;
+    if (data.chat) state.chat = data.chat;
+  }
+  if (!state.user) state.user = generateUser();
+}
+
+// ===== NAVEGAÇÃO =====
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  $(`page-${page}`).style.display = 'block';
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  event.target.closest('.nav-link').classList.add('active');
+  if (page === 'skills') drawRadar();
+  if (page === 'community') renderProfiles();
+  if (page === 'chat') renderChat();
+}
+
+function showTab(tab) {
+  state.currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+  event.target.closest('.tab-btn').classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+  $(`panel-${tab}`).style.display = 'block';
+}
+
+// ===== ROTINAS =====
+function initDaysSelector() {
+  const container = $('days-selector');
+  container.innerHTML = '';
+  DAYS.forEach((day, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'btn-primary';
+    btn.style.cssText = 'background:var(--surface-solid);color:var(--text2);padding:0.5rem 0.75rem;font-size:0.8125rem;min-width:48px;border:1px solid var(--border);font-family:var(--font-display);';
+    btn.textContent = day;
+    btn.dataset.day = i;
+    btn.onclick = function() {
+      this.classList.toggle('active');
+      this.style.background = this.classList.contains('active') ? 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))' : 'var(--surface-solid)';
+      this.style.color = this.classList.contains('active') ? 'var(--bg)' : 'var(--text2)';
+      this.style.borderColor = this.classList.contains('active') ? 'transparent' : 'var(--border)';
+      this.style.boxShadow = this.classList.contains('active') ? '0 0 15px rgba(0,240,255,0.3)' : 'none';
+    };
+    if (i >= 1 && i <= 5) {
+      btn.classList.add('active');
+      btn.style.background = 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))';
+      btn.style.color = 'var(--bg)';
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = '0 0 15px rgba(0,240,255,0.3)';
+    }
+    container.appendChild(btn);
+  });
+}
+
+function toggleAlarm() {
+  state.alarmEnabled = !state.alarmEnabled;
+  const btn = $('alarm-toggle');
+  const icon = $('alarm-icon');
+  if (state.alarmEnabled) {
+    btn.style.background = 'var(--surface-solid)';
+    btn.style.color = 'var(--text2)';
+    btn.style.boxShadow = 'none';
+    icon.textContent = '🔔';
+  } else {
+    btn.style.background = 'var(--surface-solid)';
+    btn.style.color = 'var(--text3)';
+    btn.style.boxShadow = 'none';
+    icon.textContent = '🔕';
+  }
+}
+
+function addRoutine() {
+  const title = $('routine-title').value.trim();
+  if (!title) return;
+
+  const selectedDays = Array.from(document.querySelectorAll('#days-selector button.active')).map(b => parseInt(b.dataset.day));
+
+  const routine = {
+    id: 'rt-' + Date.now(),
+    title,
+    time: $('routine-time').value,
+    days: selectedDays,
+    alarmEnabled: state.alarmEnabled,
+    alarmSound: $('alarm-sound').value,
+    completed: false,
+    createdAt: Date.now()
+  };
+
+  state.routines.push(routine);
+  updateSkill('organization', 2);
+  saveState();
+  renderRoutines();
+  $('routine-title').value = '';
+}
+
+function toggleRoutine(id) {
+  const r = state.routines.find(x => x.id === id);
+  if (r) {
+    r.completed = !r.completed;
+    if (r.completed) {
+      updateSkill('organization', 3);
+      updateSkill('consistency', 1);
+    }
+    saveState();
+    renderRoutines();
+  }
+}
+
+function deleteRoutine(id) {
+  state.routines = state.routines.filter(r => r.id !== id);
+  saveState();
+  renderRoutines();
+}
+
+function renderRoutines() {
+  const list = $('routines-list');
+  list.innerHTML = state.routines.map(r => `
+    <div class="card ${r.completed ? 'completed' : ''} fade-in">
+      <div class="card-info">
+        <div class="check-btn ${r.completed ? 'checked' : ''}" onclick="toggleRoutine('${r.id}')">${r.completed ? '✓' : ''}</div>
+        <div>
+          <h4>${r.title}</h4>
+          <div class="card-meta">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>${r.time}</span>
+            <span class="badge">${r.days.map(d => DAYS[d]).join(', ')}</span>
+            ${r.alarmEnabled ? '<span style="color:var(--neon-yellow);text-shadow:0 0 8px rgba(255,240,31,0.5);">🔔</span>' : ''}
+          </div>
+        </div>
+      </div>
+      <button class="btn-icon" onclick="deleteRoutine('${r.id}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+// ===== FINANÇAS =====
+function setFinanceType(type) {
+  state.financeType = type;
+  document.querySelectorAll('.type-toggle button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+function addFinance() {
+  const amount = parseFloat($('finance-amount').value);
+  const desc = $('finance-desc').value.trim();
+  if (!amount || !desc) return;
+
+  const entry = {
+    id: 'fn-' + Date.now(),
+    type: state.financeType,
+    amount,
+    category: autoCategorize(desc),
+    description: desc,
+    date: $('finance-date').value || new Date().toISOString().split('T')[0],
+    createdAt: Date.now()
+  };
+
+  state.finances.push(entry);
+  updateSkill('discipline', 2);
+  saveState();
+  renderFinances();
+  $('finance-amount').value = '';
+  $('finance-desc').value = '';
+}
+
+function deleteFinance(id) {
+  state.finances = state.finances.filter(f => f.id !== id);
+  saveState();
+  renderFinances();
+}
+
+function renderFinances() {
+  const income = state.finances.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
+  const expense = state.finances.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
+  const balance = income - expense;
+
+  $('finance-stats').innerHTML = `
+    <div class="stat-card income">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon-green)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      <div><span class="stat-label">Entradas</span><span class="stat-value" style="color:var(--neon-green);text-shadow:0 0 10px rgba(57,255,20,0.3);">${formatCurrency(income)}</span></div>
+    </div>
+    <div class="stat-card expense">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon-red)" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
+      <div><span class="stat-label">Saídas</span><span class="stat-value" style="color:var(--neon-red);text-shadow:0 0 10px rgba(255,42,109,0.3);">${formatCurrency(expense)}</span></div>
+    </div>
+    <div class="stat-card balance ${balance >= 0 ? 'positive' : 'negative'}">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${balance >= 0 ? 'var(--neon-green)' : 'var(--neon-red)'}" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <div><span class="stat-label">Saldo</span><span class="stat-value" style="color:${balance >= 0 ? 'var(--neon-green)' : 'var(--neon-red)'};text-shadow:0 0 10px ${balance >= 0 ? 'rgba(57,255,20,0.3)' : 'rgba(255,42,109,0.3)'}">${formatCurrency(balance)}</span></div>
+    </div>
+  `;
+
+  $('finance-list').innerHTML = state.finances.slice().reverse().map(f => `
+    <div class="entry-card ${f.type} fade-in">
+      <div>
+        <div style="font-weight:600;color:var(--text);">${f.description}</div>
+        <div style="font-size:0.8125rem;color:var(--text3);font-family:var(--font-mono);">${f.category} · ${f.date}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.875rem;">
+        <span class="entry-amount ${f.type}">${f.type === 'income' ? '+' : '-'}${formatCurrency(f.amount)}</span>
+        <button class="btn-icon" onclick="deleteFinance('${f.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== POMODORO =====
+function setPomodoro(minutes) {
+  state.pomodoroDuration = minutes * 60;
+  state.pomodoroTime = minutes * 60;
+  state.pomodoroRunning = false;
+  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
+  updateTimerDisplay();
+  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
+  event.target.closest('.preset').classList.add('active');
+}
+
+function toggleTimer() {
+  if (state.pomodoroRunning) {
+    pauseTimer();
+  } else {
+    startTimer();
+  }
+}
+
+function startTimer() {
+  state.pomodoroRunning = true;
+  const startTime = Date.now();
+  const duration = state.pomodoroTime * 1000;
+
+  state.timerWorker = setInterval(() => {
+    const elapsed = (Date.now() - startTime) / 1000;
+    state.pomodoroTime = Math.max(0, Math.ceil((duration - elapsed * 1000) / 1000));
+    updateTimerDisplay();
+
+    if (state.pomodoroTime <= 0) {
+      clearInterval(state.timerWorker);
+      state.timerWorker = null;
+      state.pomodoroRunning = false;
+      state.pomodoro.cycles++;
+      state.pomodoro.sessions.push({ id: 'pm-' + Date.now(), duration: state.pomodoroDuration, completed: true, startedAt: startTime });
+      updateSkill('focus', 5);
+      updateSkill('consistency', 2);
+      saveState();
+      updateTimerDisplay();
+      playAlarm();
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('Pomodoro Concluído!', { body: 'Hora de uma pausa!' });
       }
     }
-  ],
-  "routes": [
-    {
-      "src": "/[^.]+",
-      "dest": "/index.html"
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/assets/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    }
-  ]
+  }, 100);
+
+  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
 }
+
+function pauseTimer() {
+  state.pomodoroRunning = false;
+  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
+  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+}
+
+function resetTimer() {
+  state.pomodoroRunning = false;
+  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
+  state.pomodoroTime = state.pomodoroDuration;
+  updateTimerDisplay();
+  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+}
+
+function updateTimerDisplay() {
+  $('timer-display').textContent = formatTime(state.pomodoroTime);
+  const progress = ((state.pomodoroDuration - state.pomodoroTime) / state.pomodoroDuration) * 283;
+  $('timer-progress').setAttribute('stroke-dashoffset', progress);
+  $('pomodoro-cycles').textContent = state.pomodoro.cycles;
+  $('pomodoro-sessions').textContent = state.pomodoro.sessions.length;
+}
+
+// ===== CHECKLIST =====
+function addTask() {
+  const title = $('task-input').value.trim();
+  if (!title) return;
+
+  state.checklist.push({
+    id: 'tk-' + Date.now(),
+    title,
+    completed: false,
+    column: 'todo',
+    createdAt: Date.now()
+  });
+
+  updateSkill('execution', 2);
+  saveState();
+  renderChecklist();
+  $('task-input').value = '';
+}
+
+function toggleTask(id) {
+  const t = state.checklist.find(x => x.id === id);
+  if (t) {
+    t.completed = !t.completed;
+    if (t.completed) {
+      updateSkill('execution', 3);
+      updateSkill('consistency', 1);
+    }
+    saveState();
+    renderChecklist();
+  }
+}
+
+function moveTask(id, column) {
+  const t = state.checklist.find(x => x.id === id);
+  if (t) { t.column = column; saveState(); renderChecklist(); }
+}
+
+function deleteTask(id) {
+  state.checklist = state.checklist.filter(t => t.id !== id);
+  saveState();
+  renderChecklist();
+}
+
+function renderChecklist() {
+  const columns = [
+    { id: 'todo', label: 'A Fazer', color: '#ff2a6d' },
+    { id: 'doing', label: 'Fazendo', color: '#ff9e00' },
+    { id: 'done', label: 'Concluído', color: '#39ff14' }
+  ];
+
+  $('kanban-board').innerHTML = columns.map(col => {
+    const items = state.checklist.filter(t => t.column === col.id);
+    return `
+      <div class="column">
+        <div class="col-header" style="border-color:${col.color}">
+          <span class="col-dot" style="background:${col.color};color:${col.color}"></span>
+          <h4 style="color:${col.color}">${col.label}</h4>
+          <span class="col-count">${items.length}</span>
+        </div>
+        ${items.map(t => `
+          <div class="task-card ${t.completed ? 'completed' : ''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
+            <div style="display:flex;align-items:center;gap:0.625rem;">
+              <div class="check-btn ${t.completed ? 'checked' : ''}" onclick="toggleTask('${t.id}')">${t.completed ? '✓' : ''}</div>
+              <span class="task-title" style="flex:1;font-size:0.9375rem;font-weight:600;">${t.title}</span>
+              <button class="btn-icon" onclick="deleteTask('${t.id}')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            </div>
+            ${col.id !== 'done' ? `
+              <div style="margin-top:0.625rem;display:flex;gap:0.375rem;">
+                ${col.id === 'todo' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-cyan);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(0,240,255,0.2)" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','doing')">→ Fazendo</button>` : ''}
+                ${col.id === 'doing' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-green);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(57,255,20,0.2)" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','done')">✓ Concluir</button>` : ''}
+              </div>
+            ` : ''}
+          </div>
+        `).join('')}
+        <div style="min-height:60px;border:2px dashed var(--border2);border-radius:var(--radius);margin-top:0.625rem;transition:all 0.3s;" ondrop="dropTask(event,'${col.id}')" ondragover="allowDrop(event)" ondragenter="this.style.borderColor='var(--neon-cyan)';this.style.boxShadow='0 0 15px rgba(0,240,255,0.1)'" ondragleave="this.style.borderColor='var(--border2)';this.style.boxShadow='none'"></div>
+      </div>
+    `;
+  }).join('');
+}
+
+let draggedTask = null;
+function dragTask(e, id) { draggedTask = id; }
+function allowDrop(e) { e.preventDefault(); }
+function dropTask(e, column) {
+  e.preventDefault();
+  if (draggedTask) moveTask(draggedTask, column);
+  draggedTask = null;
+}
+
+// ===== BIBLIOTECA =====
+function handleFileUpload(e) {
+  const files = Array.from(e.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      state.files.push({
+        id: 'fl-' + Date.now(),
+        name: file.name,
+        data: evt.target.result,
+        size: file.size,
+        type: file.type,
+        uploadedAt: Date.now()
+      });
+      saveState();
+      renderFiles();
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function renderFiles() {
+  $('files-grid').innerHTML = state.files.map(f => `
+    <div class="card" style="flex-direction:column;align-items:center;text-align:center;cursor:pointer;gap:0.75rem;" onclick="viewFile('${f.id}')">
+      <div style="font-size:2.5rem;filter:drop-shadow(0 0 8px rgba(0,240,255,0.3));">${f.name.endsWith('.pdf') ? '📄' : f.type.startsWith('image') ? '🖼️' : '📁'}</div>
+      <span style="font-size:0.875rem;font-weight:600;word-break:break-all;color:var(--text);">${f.name}</span>
+      <span style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono);">${(f.size / 1024).toFixed(1)} KB</span>
+      <button class="btn-icon" style="margin-top:0.25rem;" onclick="event.stopPropagation();deleteFile('${f.id}')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  `).join('');
+}
+
+function viewFile(id) {
+  const f = state.files.find(x => x.id === id);
+  if (!f) return;
+  if (f.type.startsWith('image')) {
+    const win = window.open('', '_blank');
+    win.document.write(`<body style="margin:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${f.data}" style="max-width:95%;max-height:95%;box-shadow:0 0 50px rgba(0,240,255,0.2);"></body>`);
+  } else if (f.name.endsWith('.pdf')) {
+    const win = window.open('', '_blank');
+    win.document.write(`<body style="margin:0;background:#0a0a0f;"><embed src="${f.data}" width="100%" height="100%" type="application/pdf" style="filter:invert(1);"></body>`);
+  }
+}
+
+function deleteFile(id) {
+  state.files = state.files.filter(f => f.id !== id);
+  saveState();
+  renderFiles();
+}
+
+// ===== CHAT =====
+function sendMessage() {
+  const input = $('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  const msg = {
+    id: 'msg-' + Date.now(),
+    senderId: state.user.id,
+    senderName: state.user.name,
+    senderEmoji: state.user.emoji,
+    content: text,
+    timestamp: Date.now()
+  };
+
+  state.chat.push(msg);
+  saveState();
+  renderChat();
+  input.value = '';
+}
+
+function renderChat() {
+  $('chat-messages').innerHTML = state.chat.map(m => `
+    <div class="message ${m.senderId === state.user.id ? 'own' : 'other'} fade-in">
+      <div class="msg-avatar">${m.senderEmoji}</div>
+      <div class="msg-content">
+        <span class="msg-sender">${m.senderName}</span>
+        <p style="font-size:0.9375rem;line-height:1.5;">${m.content}</p>
+        <span class="msg-time">${new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+      </div>
+    </div>
+  `).join('');
+  $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
+}
+
+// ===== COMUNIDADE =====
+function generateProfiles() {
+  if (state.profiles.length === 0) {
+    for (let i = 0; i < 12; i++) {
+      const { name, emoji } = generateUser();
+      state.profiles.push({
+        id: 'prof-' + i,
+        name,
+        emoji,
+        isOnline: Math.random() > 0.5,
+        isHidden: false
+      });
+    }
+  }
+}
+
+function filterProfiles(query) {
+  renderProfiles(query);
+}
+
+function renderProfiles(query = '') {
+  generateProfiles();
+  const filtered = state.profiles.filter(p =>
+    !p.isHidden &&
+    p.id !== state.user.id &&
+    (p.name.toLowerCase().includes(query.toLowerCase()) || p.emoji.includes(query))
+  );
+
+  $('profiles-grid').innerHTML = filtered.map(p => `
+    <div class="profile-card fade-in">
+      <div class="prof-avatar">
+        <span style="font-size:2.25rem;">${p.emoji}</span>
+        <span class="prof-status ${p.isOnline ? 'online' : 'offline'}"></span>
+      </div>
+      <h4>${p.name}</h4>
+      <span style="font-size:0.8125rem;color:var(--text3);font-family:var(--font-mono);">${p.isOnline ? '● Online' : '○ Offline'}</span>
+      <div class="prof-actions">
+        <button>👤 Amizade</button>
+        <button onclick="hideProfile('${p.id}')">🙈 Ocultar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function hideProfile(id) {
+  const p = state.profiles.find(x => x.id === id);
+  if (p) { p.isHidden = true; renderProfiles(); }
+}
+
+// ===== PRESENÇA =====
+function renderPresence() {
+  if (state.presence.length === 0) {
+    for (let i = 0; i < 5; i++) {
+      const { name, emoji } = generateUser();
+      state.presence.push({ id: 'pres-' + i, name, emoji, isOnline: Math.random() > 0.3 });
+    }
+  }
+
+  $('presence-list').innerHTML = state.presence.map(p => `
+    <div class="pres-user">
+      <div class="pres-avatar">
+        <span>${p.emoji}</span>
+        ${p.isOnline ? '<span class="pres-ping"></span>' : ''}
+      </div>
+      <div>
+        <span class="pres-name">${p.name}</span>
+        <span class="pres-status">${p.isOnline ? '● online' : '○ offline'}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== GAMIFICAÇÃO / RADAR =====
+function updateSkill(skill, delta) {
+  state.skills[skill] = Math.min(100, Math.max(0, state.skills[skill] + delta));
+  saveState();
+  drawMiniRadar();
+}
+
+function drawMiniRadar() {
+  const canvas = $('mini-radar');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2, r = 35;
+  const skills = ['execution', 'focus', 'discipline', 'organization', 'consistency'];
+  const values = skills.map(s => state.skills[s]);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 4; i++) {
+    ctx.beginPath();
+    for (let j = 0; j < 5; j++) {
+      const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
+      const x = cx + Math.cos(angle) * (r * i / 4);
+      const y = cy + Math.sin(angle) * (r * i / 4);
+      if (j === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Data
+  ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * (r * v / 100);
+    const y = cy + Math.sin(angle) * (r * v / 100);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  // Glow points
+  ctx.fillStyle = '#00f0ff';
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 8;
+  values.forEach((v, i) => {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * (r * v / 100);
+    const y = cy + Math.sin(angle) * (r * v / 100);
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+}
+
+function drawRadar() {
+  const canvas = $('radar-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  const cx = w / 2, cy = h / 2, r = 160;
+  const labels = ['Execução', 'Foco', 'Disciplina', 'Organização', 'Consistência'];
+  const skills = ['execution', 'focus', 'discipline', 'organization', 'consistency'];
+  const values = skills.map(s => state.skills[s]);
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
+  ctx.lineWidth = 1;
+  for (let i = 1; i <= 5; i++) {
+    ctx.beginPath();
+    for (let j = 0; j < 5; j++) {
+      const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
+      const x = cx + Math.cos(angle) * (r * i / 5);
+      const y = cy + Math.sin(angle) * (r * i / 5);
+      if (j === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  // Axis lines
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+  for (let j = 0; j < 5; j++) {
+    const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
+    ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '600 13px "Rajdhani", sans-serif';
+  ctx.textAlign = 'center';
+  labels.forEach((label, i) => {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * (r + 30);
+    const y = cy + Math.sin(angle) * (r + 30);
+    ctx.fillText(label, x, y + 4);
+  });
+
+  // Data
+  const gradient = ctx.createLinearGradient(0, 0, w, h);
+  gradient.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
+  gradient.addColorStop(1, 'rgba(176, 38, 255, 0.25)');
+  ctx.fillStyle = gradient;
+  ctx.strokeStyle = '#00f0ff';
+  ctx.lineWidth = 3;
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  values.forEach((v, i) => {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * (r * v / 100);
+    const y = cy + Math.sin(angle) * (r * v / 100);
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  // Points
+  ctx.fillStyle = '#00f0ff';
+  ctx.shadowColor = '#00f0ff';
+  ctx.shadowBlur = 12;
+  values.forEach((v, i) => {
+    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
+    const x = cx + Math.cos(angle) * (r * v / 100);
+    const y = cy + Math.sin(angle) * (r * v / 100);
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.shadowBlur = 0;
+
+  // Legend
+  $('skill-legend').innerHTML = labels.map((l, i) => `
+    <div class="skill-item">
+      <span class="skill-dot"></span>
+      <span>${l}: <strong style="color:var(--neon-cyan);">${values[i]}</strong></span>
+    </div>
+  `).join('');
+}
+
+// ===== ALARME (Web Audio API) =====
+let audioCtx = null;
+function playAlarm() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
+
+    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.5);
+  } catch (e) { console.error('Alarme:', e); }
+}
+
+// ===== ALARME DE ROTINA =====
+setInterval(() => {
+  const now = new Date();
+  const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+  const day = now.getDay();
+
+  state.routines.forEach(r => {
+    if (r.alarmEnabled && r.time === time && r.days.includes(day) && !r.completed) {
+      playAlarm();
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification('⏰ Rotina!', { body: r.title });
+      }
+    }
+  });
+}, 60000);
+
+// ===== PRESENÇA HEARTBEAT =====
+setInterval(() => {
+  state.presence.forEach(p => {
+    p.isOnline = Math.random() > 0.1;
+  });
+  renderPresence();
+}, 5000);
+
+// ===== CONEXÃO =====
+function setConnectionMode(mode) {
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
+  event.target.closest('.mode-card').classList.add('active');
+}
+
+// ===== INICIALIZAÇÃO =====
+window.onload = function() {
+  loadState();
+  $('user-badge').textContent = `${state.user.emoji} ${state.user.name}`;
+  $('finance-date').value = new Date().toISOString().split('T')[0];
+
+  initDaysSelector();
+  renderRoutines();
+  renderFinances();
+  renderChecklist();
+  renderFiles();
+  renderChat();
+  renderPresence();
+  drawMiniRadar();
+  updateTimerDisplay();
+
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+};
+
+window.onbeforeunload = function() {
+  saveState();
+};
+</script>
+</body>
+</html>
