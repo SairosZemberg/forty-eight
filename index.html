@@ -4,10 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#0a0a0f">
-  <title>SuperProdutividade — Neon Edition</title>
+  <title>SuperProdutividade — Neon Firebase</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3VwZXJQcm9kdXRpdmlkYWRlIiwic2hvcnRfbmFtZSI6IlN1cGVyUHJvZCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBhMGEwZiIsInRoZW1lX2NvbG9yIjoiIzBhMGEwZiJ9">
+  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3VwZXJQcm9kdXRpdmlkYWRlIiwic2hvcnRfbmFtZSI6IlN1cGVyUHJvZCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBhMGEwZiIsInRoZW1lX2NvbG9yIjoiIzFhMWEyZSJ9">
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
   <style>
     :root {
       --bg: #0a0a0f;
@@ -33,7 +39,6 @@
       --font-body: 'Rajdhani', sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
     }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { font-size: 16px; scroll-behavior: smooth; }
     body {
@@ -44,36 +49,26 @@
       min-height: 100vh;
       overflow-x: hidden;
     }
-
-    /* Animated background grid */
     body::before {
       content: '';
-      position: fixed;
-      inset: 0;
+      position: fixed; inset: 0;
       background-image:
         linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
       background-size: 50px 50px;
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
     body::after {
       content: '';
       position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
+      top: -50%; left: -50%; width: 200%; height: 200%;
       background: radial-gradient(circle at 50% 50%, rgba(176, 38, 255, 0.08) 0%, transparent 50%);
       animation: rotateGlow 20s linear infinite;
-      pointer-events: none;
-      z-index: 0;
+      pointer-events: none; z-index: 0;
     }
     @keyframes rotateGlow {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
     }
-
     button {
       font-family: var(--font-body);
       cursor: pointer;
@@ -101,8 +96,6 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg2); }
     ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
-
-    /* Layout */
     .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
     .sidebar {
       position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
@@ -122,8 +115,7 @@
     .brand span:first-child { font-size: 1.75rem; filter: drop-shadow(0 0 8px var(--neon-cyan)); }
     .brand span:last-child {
       font-family: var(--font-display);
-      font-weight: 700;
-      font-size: 1.125rem;
+      font-weight: 700; font-size: 1.125rem;
       letter-spacing: 0.05em;
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
       -webkit-background-clip: text;
@@ -169,9 +161,8 @@
     }
     .nav-link.active::before { transform: scaleY(1); }
     .nav-link svg { width: 20px; height: 20px; }
-    .main-content { flex: 1; margin-left: 240px; padding: 1.5rem; max-width: 1100px; }
-
-    /* Header */
+    .main-content { flex: 1; margin-left: 240px; padding: 1.5rem; max-width: 1100px; transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .main-content.presence-collapsed { margin-right: 0; }
     .header {
       display: flex; align-items: center; justify-content: space-between;
       margin-bottom: 2rem; padding-bottom: 1.25rem;
@@ -179,8 +170,7 @@
     }
     .header h1 {
       font-family: var(--font-display);
-      font-size: 1.75rem;
-      font-weight: 700;
+      font-size: 1.75rem; font-weight: 700;
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -196,9 +186,23 @@
       color: var(--neon-cyan);
       box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
       font-family: var(--font-mono);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-
-    /* Tabs */
+    .user-badge:hover {
+      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
+      border-color: var(--neon-cyan);
+      transform: scale(1.02);
+    }
+    .user-badge .edit-icon {
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      font-size: 0.75rem;
+    }
+    .user-badge:hover .edit-icon { opacity: 1; }
     .tabs {
       display: flex; gap: 0.5rem;
       margin-bottom: 2rem;
@@ -246,8 +250,6 @@
     }
     .tab-btn.active::after { left: 10%; right: 10%; }
     .tab-btn svg { width: 18px; height: 18px; }
-
-    /* Panels */
     .panel {
       background: var(--surface);
       border-radius: var(--radius-lg);
@@ -268,14 +270,11 @@
     }
     .panel h3 {
       font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1rem; font-weight: 600;
       margin-bottom: 1.25rem;
       color: var(--neon-cyan);
       letter-spacing: 0.05em;
     }
-
-    /* Forms */
     .form-row { display: flex; gap: 0.875rem; margin-bottom: 0.875rem; }
     .form-row input, .form-row select { flex: 1; }
     .btn-primary {
@@ -321,8 +320,6 @@
       box-shadow: 0 0 15px rgba(255, 42, 109, 0.2);
       transform: rotate(5deg);
     }
-
-    /* Cards */
     .card {
       display: flex; align-items: center; justify-content: space-between;
       padding: 1.125rem;
@@ -383,8 +380,6 @@
       font-size: 0.6875rem;
       font-weight: 600;
     }
-
-    /* Finance */
     .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; }
     .stat-card {
       display: flex; align-items: center; gap: 1rem;
@@ -452,8 +447,6 @@
     .entry-amount { font-family: var(--font-mono); font-weight: 700; font-size: 1rem; }
     .entry-amount.income { color: var(--neon-green); text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
     .entry-amount.expense { color: var(--neon-red); text-shadow: 0 0 10px rgba(255, 42, 109, 0.3); }
-
-    /* Pomodoro */
     .pomodoro { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; padding: 1rem; }
     .presets { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
     .preset {
@@ -497,8 +490,7 @@
     .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
     .timer-text span {
       font-family: var(--font-mono);
-      font-size: 4rem;
-      font-weight: 700;
+      font-size: 4rem; font-weight: 700;
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -532,8 +524,6 @@
       color: var(--neon-cyan);
       box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
     }
-
-    /* Kanban */
     .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
     .column {
       background: rgba(18, 18, 30, 0.4);
@@ -585,8 +575,6 @@
     .task-card:hover::before { opacity: 1; }
     .task-card.completed { opacity: 0.5; }
     .task-card.completed .task-title { text-decoration: line-through; color: var(--text3); }
-
-    /* Radar */
     .radar-container { width: 100%; max-width: 450px; aspect-ratio: 1; margin: 0 auto; }
     .skill-legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
     .skill-item {
@@ -599,8 +587,6 @@
       font-family: var(--font-mono);
     }
     .skill-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
-
-    /* Chat */
     .chat {
       display: flex; flex-direction: column;
       height: calc(100vh - 120px);
@@ -678,8 +664,6 @@
       transform: scale(1.1) rotate(-5deg);
       box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
     }
-
-    /* Community */
     .profiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
     .profile-card {
       background: rgba(18, 18, 30, 0.6);
@@ -760,7 +744,7 @@
       transform: translateY(-2px);
     }
 
-    /* Presence */
+    /* ===== PRESENCE PANEL TOGGLE ===== */
     .presence {
       position: fixed; right: 0; top: 0;
       width: 220px; height: 100vh;
@@ -770,6 +754,28 @@
       overflow-y: auto;
       backdrop-filter: blur(20px);
       z-index: 100;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s ease;
+    }
+    .presence.collapsed {
+      transform: translateX(calc(100% - 44px));
+      width: 44px;
+      padding: 1.25rem 0.5rem;
+      overflow: visible;
+    }
+    .presence.collapsed .presence-content {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .presence.collapsed .presence-toggle-btn {
+      transform: rotate(180deg);
+    }
+    .presence-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      position: relative;
     }
     .presence h4 {
       font-family: var(--font-display);
@@ -778,8 +784,32 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--neon-cyan);
-      margin-bottom: 1rem;
       text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+    .presence-toggle-btn {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--border);
+      color: var(--neon-cyan);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .presence-toggle-btn:hover {
+      background: rgba(0, 240, 255, 0.2);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      transform: scale(1.1);
+    }
+    .presence.collapsed .presence-toggle-btn:hover {
+      transform: scale(1.1) rotate(180deg);
+    }
+    .presence-content {
+      transition: opacity 0.3s ease 0.1s;
     }
     .pres-user {
       display: flex; align-items: center; gap: 0.875rem;
@@ -814,7 +844,123 @@
     .pres-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
     .pres-status { font-size: 0.75rem; color: var(--text3); font-family: var(--font-mono); }
 
-    /* Connection Manager */
+    /* ===== USERNAME EDIT MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      width: 90%;
+      max-width: 420px;
+      box-shadow: 0 0 50px rgba(0, 240, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.5);
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .modal-overlay.active .modal-box {
+      transform: translateY(0) scale(1);
+    }
+    .modal-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
+    }
+    .modal-box h3 {
+      font-family: var(--font-display);
+      font-size: 1.125rem;
+      color: var(--neon-cyan);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.03em;
+    }
+    .modal-box p {
+      color: var(--text2);
+      font-size: 0.875rem;
+      margin-bottom: 1.25rem;
+      line-height: 1.5;
+    }
+    .modal-box .emoji-picker {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      justify-content: center;
+    }
+    .modal-box .emoji-option {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--surface-solid);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .modal-box .emoji-option:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+      transform: scale(1.15);
+    }
+    .modal-box .emoji-option.selected {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 240, 255, 0.15);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+    .modal-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+    .modal-actions button {
+      flex: 1;
+      padding: 0.625rem;
+      border-radius: var(--radius);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+    .modal-actions .btn-cancel {
+      background: var(--surface-solid);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+    .modal-actions .btn-cancel:hover {
+      border-color: var(--neon-red);
+      color: var(--neon-red);
+      box-shadow: 0 0 15px rgba(255, 42, 109, 0.15);
+    }
+    .modal-actions .btn-save {
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      border: 1px solid transparent;
+      color: var(--bg);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+    }
+    .modal-actions .btn-save:hover {
+      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+      transform: translateY(-2px);
+    }
+
     .conn-manager { max-width: 750px; margin: 0 auto; }
     .conn-header {
       display: flex; justify-content: space-between; align-items: center;
@@ -855,8 +1001,6 @@
     .mode-card.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.8); }
     .mode-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.375rem; }
     .mode-card p { font-size: 0.8125rem; color: var(--text3); }
-
-    /* Contact Form (Formspree) */
     .contact-panel {
       background: rgba(18, 18, 30, 0.6);
       border: 1px solid var(--border);
@@ -899,13 +1043,20 @@
     .btn-magenta:hover {
       box-shadow: 0 0 30px rgba(255, 0, 255, 0.5), 0 0 60px rgba(176, 38, 255, 0.2);
     }
-
-    /* Neon glow text */
-    .neon-text {
-      text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor;
+    .neon-text { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor; }
+    .conn-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      border: 1px solid;
+      transition: all 0.3s ease;
     }
-
-    /* Responsive */
+    .conn-badge.online { color: var(--neon-green); border-color: var(--neon-green); background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 10px rgba(57, 255, 20, 0.2); }
+    .conn-badge.offline { color: var(--neon-red); border-color: var(--neon-red); background: rgba(255, 42, 109, 0.1); box-shadow: 0 0 10px rgba(255, 42, 109, 0.2); }
+    .conn-badge.syncing { color: var(--neon-yellow); border-color: var(--neon-yellow); background: rgba(255, 240, 31, 0.1); box-shadow: 0 0 10px rgba(255, 240, 31, 0.2); animation: pulseGlow 1.5s infinite; }
     @media (max-width: 1200px) {
       .sidebar { width: 80px; align-items: center; padding: 1rem 0.5rem; }
       .brand span:last-child, .nav-link span { display: none; }
@@ -916,20 +1067,13 @@
       .stats { grid-template-columns: 1fr; }
     }
     @media (max-width: 768px) {
-      .sidebar {
-        width: 100%; height: auto; bottom: 0; top: auto;
-        flex-direction: row; padding: 0.625rem;
-        border-right: none; border-top: 1px solid var(--border);
-        backdrop-filter: blur(30px);
-      }
+      .sidebar { width: 100%; height: auto; bottom: 0; top: auto; flex-direction: row; padding: 0.625rem; border-right: none; border-top: 1px solid var(--border); backdrop-filter: blur(30px); }
       .brand { display: none; }
       .nav-links { flex-direction: row; width: 100%; justify-content: space-around; }
       .main-content { margin-left: 0; margin-bottom: 70px; padding: 1rem; }
       .mode-grid { grid-template-columns: 1fr; }
       .header { flex-direction: column; gap: 1rem; align-items: flex-start; }
     }
-
-    /* Animations */
     .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
     .slide-in { animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -940,10 +1084,10 @@
       50% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.4), 0 0 60px rgba(176, 38, 255, 0.2); }
     }
   </style>
+<base target="_blank">
 </head>
 <body>
-  <div class="app">
-    <!-- Sidebar -->
+<div class="app">
     <nav class="sidebar">
       <div class="brand">
         <span>🦁</span>
@@ -973,16 +1117,20 @@
       </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <!-- Office Page -->
+    <main class="main-content" id="main-content">
       <div id="page-office" class="page">
         <div class="header">
           <div style="display:flex;align-items:center;gap:1rem;">
             <h1>📝 Escritório</h1>
-            <span class="user-badge pulse-glow" id="user-badge">🦁 Carregando...</span>
+            <span class="user-badge pulse-glow" id="user-badge" onclick="openUsernameModal()" title="Clique para editar">
+              🦁 Carregando...
+              <span class="edit-icon">✎</span>
+            </span>
           </div>
-          <canvas id="mini-radar" width="100" height="100"></canvas>
+          <div style="display:flex;align-items:center;gap:1rem;">
+            <span id="firebase-status" class="conn-badge offline">● Offline</span>
+            <canvas id="mini-radar" width="100" height="100"></canvas>
+          </div>
         </div>
 
         <div class="tabs">
@@ -1130,12 +1278,12 @@
         </div>
       </div>
 
-      <!-- Chat Page -->
       <div id="page-chat" class="page" style="display:none;">
         <div class="chat">
           <div class="chat-header">
             <span style="width:10px;height:10px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 10px var(--neon-green);"></span>
             <h3>💬 Chat em Tempo Real</h3>
+            <span id="chat-sync-badge" class="conn-badge offline" style="margin-left:auto;font-size:0.6875rem;">● Offline</span>
           </div>
           <div class="messages" id="chat-messages"></div>
           <div class="chat-input-area">
@@ -1147,7 +1295,6 @@
         </div>
       </div>
 
-      <!-- Community Page -->
       <div id="page-community" class="page" style="display:none;">
         <div class="header">
           <h1>👥 Comunidade</h1>
@@ -1159,7 +1306,6 @@
         <div class="profiles" id="profiles-grid"></div>
       </div>
 
-      <!-- Skills Page -->
       <div id="page-skills" class="page" style="display:none;">
         <div class="header"><h1>📊 Habilidades</h1></div>
         <div class="panel" style="text-align:center;">
@@ -1168,24 +1314,28 @@
         </div>
       </div>
 
-      <!-- Connect Page -->
       <div id="page-connect" class="page" style="display:none;">
         <div class="header"><h1>🔗 Conectar</h1></div>
         <div class="conn-manager">
           <div class="conn-header">
             <h3 style="font-family:var(--font-display);font-size:1.125rem;color:var(--neon-cyan);">Modo de Conexão</h3>
-            <div class="connection-status offline" id="conn-status" style="display:flex;align-items:center;gap:0.5rem;color:var(--neon-red);font-family:var(--font-mono);font-size:0.875rem;">
+            <div id="conn-status" class="conn-badge offline">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
               <span>Offline</span>
             </div>
           </div>
           <div class="mode-grid">
-            <div class="mode-card active" onclick="setConnectionMode('local')">
+            <div class="mode-card" id="mode-local" onclick="setConnectionMode('local')">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               <h4>Modo Local</h4>
               <p>100% offline. Tudo no navegador.</p>
             </div>
-            <div class="mode-card" onclick="setConnectionMode('p2p')">
+            <div class="mode-card" id="mode-firebase" onclick="setConnectionMode('firebase')">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff9e00" stroke-width="2"><path d="M8.5 14.5L2.5 8.5"/><path d="M15.5 14.5L21.5 8.5"/><path d="M12 2L12 22"/><path d="M2.5 8.5L12 2L21.5 8.5"/><path d="M8.5 14.5L12 22L15.5 14.5"/></svg>
+              <h4>Firebase</h4>
+              <p>Sincronização real-time na nuvem.</p>
+            </div>
+            <div class="mode-card disabled">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b026ff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
               <h4>WebRTC P2P</h4>
               <p>Direto entre navegadores.</p>
@@ -1195,25 +1345,22 @@
               <h4>Google Sheets</h4>
               <p>Planilha como backend.</p>
             </div>
-            <div class="mode-card disabled">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff01f" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-              <h4>Firebase</h4>
-              <p>Backend real-time grátis.</p>
-            </div>
           </div>
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;backdrop-filter:blur(10px);">
             <h4 style="font-family:var(--font-display);font-size:1rem;color:var(--neon-cyan);margin-bottom:0.75rem;">📋 Instruções</h4>
             <p style="color:var(--text2);font-size:0.9375rem;margin:0.5rem 0 1.25rem;line-height:1.6;">
-              No momento você está no <strong style="color:var(--neon-cyan);">Modo Local</strong>. Todos os dados ficam apenas no seu navegador.
-              Para sincronizar entre dispositivos, configure Firebase ou Google Apps Script no arquivo .env
+              No momento você está no <strong style="color:var(--neon-cyan);" id="current-mode-text">Modo Local</strong>. 
+              <span id="firebase-instructions" style="display:none;">Dados sincronizados em tempo real com o Firebase Firestore. Suas rotinas, finanças, checklist e chat são salvos na nuvem automaticamente.</span>
+              <span id="local-instructions">Todos os dados ficam apenas no seu navegador. Ative o Firebase para sincronizar entre dispositivos.</span>
             </p>
-            <div style="background:var(--bg2);padding:1rem 1.25rem;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.8125rem;border:1px solid var(--border2);color:var(--neon-cyan);">
-              VITE_FIREBASE_API_KEY=AIza...<br>
-              VITE_FIREBASE_PROJECT_ID=seu-projeto
+            <div id="firebase-config-display" style="background:var(--bg2);padding:1rem 1.25rem;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.8125rem;border:1px solid var(--border2);color:var(--neon-cyan);display:none;">
+              <div style="color:var(--neon-green);margin-bottom:0.5rem;">✅ Firebase conectado</div>
+              Projeto: neon-18834<br>
+              Auth: Anônimo ativo<br>
+              Firestore: Real-time sync
             </div>
           </div>
 
-          <!-- Formspree Contact Form -->
           <div class="contact-panel">
             <h4>📨 Fale Conosco</h4>
             <p>Encontrou um bug, tem uma sugestão futurista ou quer colaborar? Envie uma mensagem!</p>
@@ -1232,19 +1379,39 @@
       </div>
     </main>
 
-    <!-- Presence Bar -->
-    <aside class="presence">
-      <h4>Online</h4>
-      <div id="presence-list"></div>
+    <!-- Presence Bar com Toggle -->
+    <aside class="presence" id="presence-panel">
+      <div class="presence-header">
+        <h4>Online</h4>
+        <button class="presence-toggle-btn" id="presence-toggle" onclick="togglePresencePanel()" title="Recolher/Expandir">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+      <div class="presence-content" id="presence-content">
+        <div id="presence-list"></div>
+      </div>
     </aside>
   </div>
 
+  <!-- Username Edit Modal -->
+  <div class="modal-overlay" id="username-modal">
+    <div class="modal-box">
+      <h3>✏️ Editar Perfil</h3>
+      <p>Escolha um emoji e digite seu nome de exibição. Isso será sincronizado localmente e na nuvem (Firebase).</p>
+      <div class="emoji-picker" id="emoji-picker"></div>
+      <input type="text" id="edit-username" placeholder="Seu nome..." maxlength="30">
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeUsernameModal()">Cancelar</button>
+        <button class="btn-save" onclick="saveUsername()">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
 <script>
 // ============================================
-// SUPERPRODUTIVIDADE - NEON EDITION
+// SUPERPRODUTIVIDADE - NEON FIREBASE EDITION v2
+// Melhorias: Toggle Presença, Limpeza Rotinas, Editar Nome
 // ============================================
 
-// ===== UTILITÁRIOS =====
 const $ = id => document.getElementById(id);
 const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const ALLOWED_ANIMALS = ['🦁','🐯','🐱','🐆','🐅','🐈','🐈‍⬛','🐝','🦋','🐜','🐞','🦗','🪲','🪳','🦟','🪰'];
@@ -1300,11 +1467,217 @@ let state = {
   pomodoroRunning: false,
   pomodoroTime: 25 * 60,
   pomodoroDuration: 25 * 60,
-  timerWorker: null
+  timerWorker: null,
+  connectionMode: 'local',
+  firebaseReady: false,
+  firebaseUser: null,
+  presenceCollapsed: false
 };
 
-// ===== PERSISTÊNCIA =====
-function saveState() {
+// ===== FIREBASE CONFIG =====
+const firebaseConfig = {
+  apiKey: "AIzaSyA7cxTiU0EHxuVWtL3z5-x5UP1Wa6h_FvU",
+  authDomain: "neon-18834.firebaseapp.com",
+  projectId: "neon-18834",
+  storageBucket: "neon-18834.firebasestorage.app",
+  messagingSenderId: "252182690759",
+  appId: "1:252182690759:web:908e9b43a36a34dee937e2",
+  measurementId: "G-ZTTCCVM8V2"
+};
+
+let db = null;
+let auth = null;
+let firebaseApp = null;
+let unsubRoutines = null;
+let unsubChat = null;
+let unsubPresence = null;
+
+// ===== INICIALIZAR FIREBASE =====
+function initFirebase() {
+  try {
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK não carregado');
+      return false;
+    }
+    firebaseApp = firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    auth = firebase.auth();
+    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+      if (err.code === 'failed-precondition') console.warn('Persistência falhou: múltiplas abas');
+      else if (err.code === 'unimplemented') console.warn('Persistência não suportada');
+    });
+    return true;
+  } catch (e) {
+    console.error('Erro ao inicializar Firebase:', e);
+    return false;
+  }
+}
+
+function signInAnon() {
+  if (!auth) return Promise.reject('Auth não inicializado');
+  return auth.signInAnonymously().then(cred => {
+    state.firebaseUser = cred.user;
+    state.firebaseReady = true;
+    updateConnectionStatus('online');
+    return cred.user;
+  }).catch(err => {
+    console.error('Erro auth:', err);
+    updateConnectionStatus('offline');
+    throw err;
+  });
+}
+
+function updateConnectionStatus(status) {
+  const badges = document.querySelectorAll('.conn-badge');
+  badges.forEach(badge => {
+    badge.className = 'conn-badge ' + status;
+    if (status === 'online') badge.innerHTML = '● Firebase Online';
+    else if (status === 'syncing') badge.innerHTML = '◐ Sincronizando...';
+    else badge.innerHTML = '● Offline';
+  });
+  const connStatus = $('conn-status');
+  if (connStatus) {
+    connStatus.className = 'conn-badge ' + status;
+    if (status === 'online') {
+      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Firebase Online</span>';
+    } else if (status === 'syncing') {
+      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>Sincronizando...</span>';
+    } else {
+      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Offline</span>';
+    }
+  }
+}
+
+// ===== FIRESTORE SYNC =====
+function getUserDocRef() {
+  if (!db || !state.firebaseUser) return null;
+  return db.collection('users').doc(state.firebaseUser.uid);
+}
+
+function syncToFirestore() {
+  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
+  updateConnectionStatus('syncing');
+  const userRef = getUserDocRef();
+  if (!userRef) return;
+  const data = {
+    routines: state.routines,
+    finances: state.finances,
+    checklist: state.checklist,
+    skills: state.skills,
+    pomodoro: state.pomodoro,
+    user: { id: state.user.id, name: state.user.name, emoji: state.user.emoji },
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  userRef.set(data, { merge: true }).then(() => {
+    updateConnectionStatus('online');
+  }).catch(err => {
+    console.error('Sync error:', err);
+    updateConnectionStatus('offline');
+  });
+}
+
+function listenFromFirestore() {
+  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
+  const userRef = getUserDocRef();
+  if (!userRef) return;
+  if (unsubRoutines) unsubRoutines();
+  unsubRoutines = userRef.onSnapshot(doc => {
+    if (!doc.exists) return;
+    const data = doc.data();
+    if (data.routines) state.routines = data.routines;
+    if (data.finances) state.finances = data.finances;
+    if (data.checklist) state.checklist = data.checklist;
+    if (data.skills) state.skills = data.skills;
+    if (data.pomodoro) state.pomodoro = data.pomodoro;
+    renderRoutines();
+    renderFinances();
+    renderChecklist();
+    drawMiniRadar();
+    updateTimerDisplay();
+    saveLocal();
+  }, err => console.error('Listen error:', err));
+}
+
+// ===== CHAT GLOBAL =====
+function sendMessageToFirebase(text) {
+  if (!db || state.connectionMode !== 'firebase') return false;
+  const msg = {
+    senderId: state.user.id,
+    senderName: state.user.name,
+    senderEmoji: state.user.emoji,
+    content: text,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection('chat').add(msg).catch(err => console.error('Chat error:', err));
+  return true;
+}
+
+function listenChatFromFirebase() {
+  if (!db || state.connectionMode !== 'firebase') return;
+  if (unsubChat) unsubChat();
+  unsubChat = db.collection('chat')
+    .orderBy('timestamp', 'desc')
+    .limit(50)
+    .onSnapshot(snapshot => {
+      const msgs = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (data.timestamp) {
+          msgs.unshift({
+            id: doc.id,
+            senderId: data.senderId,
+            senderName: data.senderName,
+            senderEmoji: data.senderEmoji,
+            content: data.content,
+            timestamp: data.timestamp.toMillis ? data.timestamp.toMillis() : Date.now()
+          });
+        }
+      });
+      state.chat = msgs;
+      renderChat();
+    }, err => console.error('Chat listen error:', err));
+}
+
+// ===== PRESENCE GLOBAL =====
+function updateFirebasePresence() {
+  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
+  const presenceRef = db.collection('presence').doc(state.firebaseUser.uid);
+  presenceRef.set({
+    name: state.user.name,
+    emoji: state.user.emoji,
+    isOnline: true,
+    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  window.addEventListener('beforeunload', () => {
+    presenceRef.update({ isOnline: false });
+  });
+}
+
+function listenGlobalPresence() {
+  if (!db || state.connectionMode !== 'firebase') return;
+  if (unsubPresence) unsubPresence();
+  unsubPresence = db.collection('presence')
+    .where('isOnline', '==', true)
+    .onSnapshot(snapshot => {
+      const onlineUsers = [];
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        if (doc.id !== state.firebaseUser?.uid) {
+          onlineUsers.push({
+            id: doc.id,
+            name: data.name || 'Anônimo',
+            emoji: data.emoji || '👤',
+            isOnline: true
+          });
+        }
+      });
+      state.presence = onlineUsers;
+      renderPresence();
+    });
+}
+
+// ===== PERSISTÊNCIA LOCAL =====
+function saveLocal() {
   const toSave = {
     user: state.user,
     routines: state.routines,
@@ -1313,12 +1686,14 @@ function saveState() {
     checklist: state.checklist,
     files: state.files.map(f => ({ id: f.id, name: f.name, size: f.size, uploadedAt: f.uploadedAt })),
     chat: state.chat,
-    skills: state.skills
+    skills: state.skills,
+    connectionMode: state.connectionMode,
+    presenceCollapsed: state.presenceCollapsed
   };
   localStorage.setItem('superprod_state', JSON.stringify(toSave));
 }
 
-function loadState() {
+function loadLocal() {
   const saved = localStorage.getItem('superprod_state');
   if (saved) {
     const data = JSON.parse(saved);
@@ -1329,9 +1704,103 @@ function loadState() {
     if (data.checklist) state.checklist = data.checklist;
     if (data.skills) state.skills = data.skills;
     if (data.chat) state.chat = data.chat;
+    if (data.connectionMode) state.connectionMode = data.connectionMode;
+    if (data.presenceCollapsed !== undefined) state.presenceCollapsed = data.presenceCollapsed;
   }
   if (!state.user) state.user = generateUser();
 }
+
+function saveState() {
+  saveLocal();
+  if (state.connectionMode === 'firebase' && state.firebaseReady) {
+    syncToFirestore();
+  }
+}
+
+// ===== TOGGLE PRESENCE PANEL =====
+function togglePresencePanel() {
+  state.presenceCollapsed = !state.presenceCollapsed;
+  const panel = $('presence-panel');
+  const main = $('main-content');
+
+  if (state.presenceCollapsed) {
+    panel.classList.add('collapsed');
+    main.classList.add('presence-collapsed');
+  } else {
+    panel.classList.remove('collapsed');
+    main.classList.remove('presence-collapsed');
+  }
+  saveLocal();
+}
+
+// ===== USERNAME EDIT MODAL =====
+let selectedEmoji = null;
+
+function openUsernameModal() {
+  const modal = $('username-modal');
+  const picker = $('emoji-picker');
+  const input = $('edit-username');
+
+  // Popular emoji picker
+  picker.innerHTML = '';
+  selectedEmoji = state.user.emoji;
+  ALLOWED_ANIMALS.forEach(emoji => {
+    const div = document.createElement('div');
+    div.className = 'emoji-option' + (emoji === selectedEmoji ? ' selected' : '');
+    div.textContent = emoji;
+    div.onclick = () => {
+      document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
+      div.classList.add('selected');
+      selectedEmoji = emoji;
+    };
+    picker.appendChild(div);
+  });
+
+  // Preencher nome atual
+  input.value = state.user.name.replace(state.user.emoji, '').trim();
+
+  modal.classList.add('active');
+}
+
+function closeUsernameModal() {
+  $('username-modal').classList.remove('active');
+}
+
+function saveUsername() {
+  const input = $('edit-username');
+  const newName = input.value.trim();
+
+  if (!newName) {
+    alert('Digite um nome válido!');
+    return;
+  }
+
+  const emoji = selectedEmoji || state.user.emoji;
+  const fullName = newName + ' ' + emoji;
+
+  // Atualizar estado
+  state.user.name = fullName;
+  state.user.emoji = emoji;
+
+  // Atualizar UI
+  $('user-badge').innerHTML = `${emoji} ${fullName} <span class="edit-icon">✎</span>`;
+
+  // Salvar
+  saveState();
+
+  // Se Firebase ativo, atualizar presença
+  if (state.connectionMode === 'firebase' && state.firebaseReady) {
+    updateFirebasePresence();
+    syncToFirestore();
+  }
+
+  closeUsernameModal();
+}
+
+// Fechar modal ao clicar fora
+$('username-modal').addEventListener('click', (e) => {
+  if (e.target === $('username-modal')) closeUsernameModal();
+});
 
 // ===== NAVEGAÇÃO =====
 function showPage(page) {
@@ -1398,15 +1867,26 @@ function toggleAlarm() {
 }
 
 function addRoutine() {
-  const title = $('routine-title').value.trim();
-  if (!title) return;
+  const titleInput = $('routine-title');
+  const timeInput = $('routine-time');
+  const title = titleInput.value.trim();
+
+  if (!title) {
+    titleInput.style.borderColor = 'var(--neon-red)';
+    titleInput.style.boxShadow = '0 0 15px rgba(255, 42, 109, 0.3)';
+    setTimeout(() => {
+      titleInput.style.borderColor = '';
+      titleInput.style.boxShadow = '';
+    }, 2000);
+    return;
+  }
 
   const selectedDays = Array.from(document.querySelectorAll('#days-selector button.active')).map(b => parseInt(b.dataset.day));
 
   const routine = {
     id: 'rt-' + Date.now(),
     title,
-    time: $('routine-time').value,
+    time: timeInput.value,
     days: selectedDays,
     alarmEnabled: state.alarmEnabled,
     alarmSound: $('alarm-sound').value,
@@ -1418,17 +1898,43 @@ function addRoutine() {
   updateSkill('organization', 2);
   saveState();
   renderRoutines();
-  $('routine-title').value = '';
+
+  // LIMPAR CAMPOS após adicionar
+  titleInput.value = '';
+  timeInput.value = '08:00';
+
+  // Resetar dias para padrão (Seg-Sex)
+  document.querySelectorAll('#days-selector button').forEach((btn, i) => {
+    if (i >= 1 && i <= 5) {
+      btn.classList.add('active');
+      btn.style.background = 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))';
+      btn.style.color = 'var(--bg)';
+      btn.style.borderColor = 'transparent';
+      btn.style.boxShadow = '0 0 15px rgba(0,240,255,0.3)';
+    } else {
+      btn.classList.remove('active');
+      btn.style.background = 'var(--surface-solid)';
+      btn.style.color = 'var(--text2)';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.boxShadow = 'none';
+    }
+  });
+
+  // Resetar alarme para ativo
+  state.alarmEnabled = true;
+  const alarmBtn = $('alarm-toggle');
+  const alarmIcon = $('alarm-icon');
+  alarmBtn.style.background = 'var(--surface-solid)';
+  alarmBtn.style.color = 'var(--text2)';
+  alarmBtn.style.boxShadow = 'none';
+  alarmIcon.textContent = '🔔';
 }
 
 function toggleRoutine(id) {
   const r = state.routines.find(x => x.id === id);
   if (r) {
     r.completed = !r.completed;
-    if (r.completed) {
-      updateSkill('organization', 3);
-      updateSkill('consistency', 1);
-    }
+    if (r.completed) { updateSkill('organization', 3); updateSkill('consistency', 1); }
     saveState();
     renderRoutines();
   }
@@ -1474,7 +1980,6 @@ function addFinance() {
   const amount = parseFloat($('finance-amount').value);
   const desc = $('finance-desc').value.trim();
   if (!amount || !desc) return;
-
   const entry = {
     id: 'fn-' + Date.now(),
     type: state.financeType,
@@ -1484,7 +1989,6 @@ function addFinance() {
     date: $('finance-date').value || new Date().toISOString().split('T')[0],
     createdAt: Date.now()
   };
-
   state.finances.push(entry);
   updateSkill('discipline', 2);
   saveState();
@@ -1547,11 +2051,7 @@ function setPomodoro(minutes) {
 }
 
 function toggleTimer() {
-  if (state.pomodoroRunning) {
-    pauseTimer();
-  } else {
-    startTimer();
-  }
+  if (state.pomodoroRunning) { pauseTimer(); } else { startTimer(); }
 }
 
 function startTimer() {
@@ -1610,7 +2110,6 @@ function updateTimerDisplay() {
 function addTask() {
   const title = $('task-input').value.trim();
   if (!title) return;
-
   state.checklist.push({
     id: 'tk-' + Date.now(),
     title,
@@ -1618,7 +2117,6 @@ function addTask() {
     column: 'todo',
     createdAt: Date.now()
   });
-
   updateSkill('execution', 2);
   saveState();
   renderChecklist();
@@ -1629,10 +2127,7 @@ function toggleTask(id) {
   const t = state.checklist.find(x => x.id === id);
   if (t) {
     t.completed = !t.completed;
-    if (t.completed) {
-      updateSkill('execution', 3);
-      updateSkill('consistency', 1);
-    }
+    if (t.completed) { updateSkill('execution', 3); updateSkill('consistency', 1); }
     saveState();
     renderChecklist();
   }
@@ -1676,8 +2171,8 @@ function renderChecklist() {
             </div>
             ${col.id !== 'done' ? `
               <div style="margin-top:0.625rem;display:flex;gap:0.375rem;">
-                ${col.id === 'todo' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-cyan);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(0,240,255,0.2)" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','doing')">→ Fazendo</button>` : ''}
-                ${col.id === 'doing' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-green);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(57,255,20,0.2)" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','done')">✓ Concluir</button>` : ''}
+                ${col.id === 'todo' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-cyan);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(0,240,255,0.2)'" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','doing')">→ Fazendo</button>` : ''}
+                ${col.id === 'doing' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-green);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(57,255,20,0.2)'" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','done')">✓ Concluir</button>` : ''}
               </div>
             ` : ''}
           </div>
@@ -1711,7 +2206,7 @@ function handleFileUpload(e) {
         type: file.type,
         uploadedAt: Date.now()
       });
-      saveState();
+      saveLocal();
       renderFiles();
     };
     reader.readAsDataURL(file);
@@ -1745,7 +2240,7 @@ function viewFile(id) {
 
 function deleteFile(id) {
   state.files = state.files.filter(f => f.id !== id);
-  saveState();
+  saveLocal();
   renderFiles();
 }
 
@@ -1755,6 +2250,12 @@ function sendMessage() {
   const text = input.value.trim();
   if (!text) return;
 
+  if (state.connectionMode === 'firebase' && state.firebaseReady) {
+    sendMessageToFirebase(text);
+    input.value = '';
+    return;
+  }
+
   const msg = {
     id: 'msg-' + Date.now(),
     senderId: state.user.id,
@@ -1763,7 +2264,6 @@ function sendMessage() {
     content: text,
     timestamp: Date.now()
   };
-
   state.chat.push(msg);
   saveState();
   renderChat();
@@ -1789,13 +2289,7 @@ function generateProfiles() {
   if (state.profiles.length === 0) {
     for (let i = 0; i < 12; i++) {
       const { name, emoji } = generateUser();
-      state.profiles.push({
-        id: 'prof-' + i,
-        name,
-        emoji,
-        isOnline: Math.random() > 0.5,
-        isHidden: false
-      });
+      state.profiles.push({ id: 'prof-' + i, name, emoji, isOnline: Math.random() > 0.5, isHidden: false });
     }
   }
 }
@@ -1807,8 +2301,7 @@ function filterProfiles(query) {
 function renderProfiles(query = '') {
   generateProfiles();
   const filtered = state.profiles.filter(p =>
-    !p.isHidden &&
-    p.id !== state.user.id &&
+    !p.isHidden && p.id !== state.user.id &&
     (p.name.toLowerCase().includes(query.toLowerCase()) || p.emoji.includes(query))
   );
 
@@ -1873,8 +2366,6 @@ function drawMiniRadar() {
   const values = skills.map(s => state.skills[s]);
 
   ctx.clearRect(0, 0, w, h);
-
-  // Grid
   ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
   ctx.lineWidth = 1;
   for (let i = 1; i <= 4; i++) {
@@ -1889,8 +2380,6 @@ function drawMiniRadar() {
     ctx.closePath();
     ctx.stroke();
   }
-
-  // Data
   ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
   ctx.strokeStyle = '#00f0ff';
   ctx.lineWidth = 2;
@@ -1905,8 +2394,6 @@ function drawMiniRadar() {
   ctx.closePath();
   ctx.fill();
   ctx.stroke();
-
-  // Glow points
   ctx.fillStyle = '#00f0ff';
   ctx.shadowColor = '#00f0ff';
   ctx.shadowBlur = 8;
@@ -1932,8 +2419,6 @@ function drawRadar() {
   const values = skills.map(s => state.skills[s]);
 
   ctx.clearRect(0, 0, w, h);
-
-  // Grid
   ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
   ctx.lineWidth = 1;
   for (let i = 1; i <= 5; i++) {
@@ -1948,8 +2433,6 @@ function drawRadar() {
     ctx.closePath();
     ctx.stroke();
   }
-
-  // Axis lines
   ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
   for (let j = 0; j < 5; j++) {
     const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
@@ -1958,8 +2441,6 @@ function drawRadar() {
     ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
     ctx.stroke();
   }
-
-  // Labels
   ctx.fillStyle = '#94a3b8';
   ctx.font = '600 13px "Rajdhani", sans-serif';
   ctx.textAlign = 'center';
@@ -1969,8 +2450,6 @@ function drawRadar() {
     const y = cy + Math.sin(angle) * (r + 30);
     ctx.fillText(label, x, y + 4);
   });
-
-  // Data
   const gradient = ctx.createLinearGradient(0, 0, w, h);
   gradient.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
   gradient.addColorStop(1, 'rgba(176, 38, 255, 0.25)');
@@ -1991,8 +2470,6 @@ function drawRadar() {
   ctx.fill();
   ctx.stroke();
   ctx.shadowBlur = 0;
-
-  // Points
   ctx.fillStyle = '#00f0ff';
   ctx.shadowColor = '#00f0ff';
   ctx.shadowBlur = 12;
@@ -2005,8 +2482,6 @@ function drawRadar() {
     ctx.fill();
   });
   ctx.shadowBlur = 0;
-
-  // Legend
   $('skill-legend').innerHTML = labels.map((l, i) => `
     <div class="skill-item">
       <span class="skill-dot"></span>
@@ -2015,25 +2490,21 @@ function drawRadar() {
   `).join('');
 }
 
-// ===== ALARME (Web Audio API) =====
+// ===== ALARME =====
 let audioCtx = null;
 function playAlarm() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === 'suspended') audioCtx.resume();
-
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-
     osc.type = 'sine';
     osc.frequency.setValueAtTime(880, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
-
     gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-
     osc.start(audioCtx.currentTime);
     osc.stop(audioCtx.currentTime + 0.5);
   } catch (e) { console.error('Alarme:', e); }
@@ -2044,7 +2515,6 @@ setInterval(() => {
   const now = new Date();
   const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
   const day = now.getDay();
-
   state.routines.forEach(r => {
     if (r.alarmEnabled && r.time === time && r.days.includes(day) && !r.completed) {
       playAlarm();
@@ -2055,25 +2525,81 @@ setInterval(() => {
   });
 }, 60000);
 
-// ===== PRESENÇA HEARTBEAT =====
+// ===== PRESENÇA HEARTBEAT (local fallback) =====
 setInterval(() => {
-  state.presence.forEach(p => {
-    p.isOnline = Math.random() > 0.1;
-  });
-  renderPresence();
+  if (state.connectionMode !== 'firebase') {
+    state.presence.forEach(p => { p.isOnline = Math.random() > 0.1; });
+    renderPresence();
+  }
 }, 5000);
 
 // ===== CONEXÃO =====
 function setConnectionMode(mode) {
   document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
   event.target.closest('.mode-card').classList.add('active');
+
+  state.connectionMode = mode;
+  saveLocal();
+
+  const localInstr = $('local-instructions');
+  const firebaseInstr = $('firebase-instructions');
+  const firebaseConfigDisplay = $('firebase-config-display');
+  const currentModeText = $('current-mode-text');
+
+  if (mode === 'firebase') {
+    if (localInstr) localInstr.style.display = 'none';
+    if (firebaseInstr) firebaseInstr.style.display = 'inline';
+    if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'block';
+    if (currentModeText) currentModeText.textContent = 'Modo Firebase';
+
+    if (!firebaseApp) {
+      const ok = initFirebase();
+      if (ok) {
+        signInAnon().then(() => {
+          syncToFirestore();
+          listenFromFirestore();
+          listenChatFromFirebase();
+          updateFirebasePresence();
+          listenGlobalPresence();
+        }).catch(err => {
+          console.error('Falha ao conectar Firebase:', err);
+          alert('Não foi possível conectar ao Firebase. Verifique sua conexão.');
+          setConnectionMode('local');
+        });
+      }
+    } else if (state.firebaseReady) {
+      syncToFirestore();
+      listenFromFirestore();
+      listenChatFromFirebase();
+      updateFirebasePresence();
+      listenGlobalPresence();
+    }
+  } else {
+    if (localInstr) localInstr.style.display = 'inline';
+    if (firebaseInstr) firebaseInstr.style.display = 'none';
+    if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'none';
+    if (currentModeText) currentModeText.textContent = 'Modo Local';
+
+    if (unsubRoutines) { unsubRoutines(); unsubRoutines = null; }
+    if (unsubChat) { unsubChat(); unsubChat = null; }
+    if (unsubPresence) { unsubPresence(); unsubPresence = null; }
+    updateConnectionStatus('offline');
+  }
 }
 
 // ===== INICIALIZAÇÃO =====
 window.onload = function() {
-  loadState();
-  $('user-badge').textContent = `${state.user.emoji} ${state.user.name}`;
+  loadLocal();
+
+  // Atualizar badge do usuário
+  $('user-badge').innerHTML = `${state.user.emoji} ${state.user.name} <span class="edit-icon">✎</span>`;
   $('finance-date').value = new Date().toISOString().split('T')[0];
+
+  // Restaurar estado do painel de presença
+  if (state.presenceCollapsed) {
+    $('presence-panel').classList.add('collapsed');
+    $('main-content').classList.add('presence-collapsed');
+  }
 
   initDaysSelector();
   renderRoutines();
@@ -2085,13 +2611,45 @@ window.onload = function() {
   drawMiniRadar();
   updateTimerDisplay();
 
+  // Restaurar modo de conexão
+  if (state.connectionMode === 'firebase') {
+    $('mode-firebase').classList.add('active');
+    $('mode-local').classList.remove('active');
+    setTimeout(() => {
+      const ok = initFirebase();
+      if (ok) {
+        signInAnon().then(() => {
+          syncToFirestore();
+          listenFromFirestore();
+          listenChatFromFirebase();
+          updateFirebasePresence();
+          listenGlobalPresence();
+
+          const localInstr = $('local-instructions');
+          const firebaseInstr = $('firebase-instructions');
+          const firebaseConfigDisplay = $('firebase-config-display');
+          const currentModeText = $('current-mode-text');
+          if (localInstr) localInstr.style.display = 'none';
+          if (firebaseInstr) firebaseInstr.style.display = 'inline';
+          if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'block';
+          if (currentModeText) currentModeText.textContent = 'Modo Firebase';
+        }).catch(console.error);
+      }
+    }, 500);
+  } else {
+    $('mode-local').classList.add('active');
+  }
+
   if ('Notification' in window && Notification.permission === 'default') {
     Notification.requestPermission();
   }
 };
 
 window.onbeforeunload = function() {
-  saveState();
+  saveLocal();
+  if (state.connectionMode === 'firebase' && db && state.firebaseUser) {
+    db.collection('presence').doc(state.firebaseUser.uid).update({ isOnline: false });
+  }
 };
 </script>
 </body>
