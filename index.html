@@ -1,2656 +1,1218 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0a0a0f">
-  <title>SuperProdutividade — Neon Firebase</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Rajdhani:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3VwZXJQcm9kdXRpdmlkYWRlIiwic2hvcnRfbmFtZSI6IlN1cGVyUHJvZCIsInN0YXJ0X3VybCI6Ii4vIiwiZGlzcGxheSI6InN0YW5kYWxvbmUiLCJiYWNrZ3JvdW5kX2NvbG9yIjoiIzBhMGEwZiIsInRoZW1lX2NvbG9yIjoiIzFhMWEyZSJ9">
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-  <style>
-    :root {
-      --bg: #0a0a0f;
-      --bg2: #12121a;
-      --surface: rgba(18, 18, 30, 0.7);
-      --surface-solid: #12121e;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --text3: #64748b;
-      --neon-cyan: #00f0ff;
-      --neon-magenta: #ff00ff;
-      --neon-green: #39ff14;
-      --neon-purple: #b026ff;
-      --neon-yellow: #fff01f;
-      --neon-orange: #ff9e00;
-      --neon-red: #ff2a6d;
-      --border: rgba(0, 240, 255, 0.15);
-      --border2: rgba(0, 240, 255, 0.08);
-      --shadow: 0 0 20px rgba(0, 240, 255, 0.1);
-      --radius: 12px;
-      --radius-lg: 20px;
-      --font-display: 'Orbitron', sans-serif;
-      --font-body: 'Rajdhani', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html { font-size: 16px; scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-body);
-      background: var(--bg);
-      color: var(--text);
-      line-height: 1.5;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none; z-index: 0;
-    }
-    body::after {
-      content: '';
-      position: fixed;
-      top: -50%; left: -50%; width: 200%; height: 200%;
-      background: radial-gradient(circle at 50% 50%, rgba(176, 38, 255, 0.08) 0%, transparent 50%);
-      animation: rotateGlow 20s linear infinite;
-      pointer-events: none; z-index: 0;
-    }
-    @keyframes rotateGlow {
-      0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); }
-    }
-    button {
-      font-family: var(--font-body);
-      cursor: pointer;
-      border: none;
-      background: none;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    input, select, textarea {
-      font-family: var(--font-body);
-      outline: none;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0.625rem 0.875rem;
-      font-size: 0.9375rem;
-      background: var(--surface);
-      color: var(--text);
-      width: 100%;
-      backdrop-filter: blur(10px);
-    }
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3), inset 0 0 10px rgba(0, 240, 255, 0.05);
-    }
-    input::placeholder { color: var(--text3); }
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg2); }
-    ::-webkit-scrollbar-thumb { background: var(--neon-cyan); border-radius: 3px; }
-    .app { display: flex; min-height: 100vh; position: relative; z-index: 1; }
-    .sidebar {
-      position: fixed; left: 0; top: 0; width: 240px; height: 100vh;
-      background: rgba(10, 10, 15, 0.85);
-      border-right: 1px solid var(--border);
-      display: flex; flex-direction: column;
-      padding: 1.25rem 1rem;
-      z-index: 100;
-      backdrop-filter: blur(20px);
-    }
-    .brand {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 0.75rem 0.75rem 1.5rem;
-      border-bottom: 1px solid var(--border2);
-      margin-bottom: 1rem;
-    }
-    .brand span:first-child { font-size: 1.75rem; filter: drop-shadow(0 0 8px var(--neon-cyan)); }
-    .brand span:last-child {
-      font-family: var(--font-display);
-      font-weight: 700; font-size: 1.125rem;
-      letter-spacing: 0.05em;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-    }
-    .nav-links { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-    .nav-link {
-      display: flex; align-items: center; gap: 0.875rem;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      font-size: 0.9375rem;
-      font-weight: 600;
-      color: var(--text2);
-      text-decoration: none;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      border: 1px solid transparent;
-      transition: all 0.3s ease;
-    }
-    .nav-link::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0; width: 3px;
-      background: var(--neon-cyan);
-      border-radius: 0 4px 4px 0;
-      transform: scaleY(0);
-      transition: transform 0.3s ease;
-    }
-    .nav-link:hover {
-      background: rgba(0, 240, 255, 0.08);
-      color: var(--neon-cyan);
-      border-color: rgba(0, 240, 255, 0.2);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
-    }
-    .nav-link:hover::before { transform: scaleY(1); }
-    .nav-link.active {
-      background: rgba(0, 240, 255, 0.12);
-      color: var(--neon-cyan);
-      border-color: rgba(0, 240, 255, 0.3);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15), inset 0 0 10px rgba(0, 240, 255, 0.05);
-    }
-    .nav-link.active::before { transform: scaleY(1); }
-    .nav-link svg { width: 20px; height: 20px; }
-    .main-content { flex: 1; margin-left: 240px; padding: 1.5rem; max-width: 1100px; transition: margin-right 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    .main-content.presence-collapsed { margin-right: 0; }
-    .header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 2rem; padding-bottom: 1.25rem;
-      border-bottom: 1px solid var(--border2);
-    }
-    .header h1 {
-      font-family: var(--font-display);
-      font-size: 1.75rem; font-weight: 700;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: 0.02em;
-    }
-    .user-badge {
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      padding: 0.5rem 1rem;
-      border-radius: 999px;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
-      font-family: var(--font-mono);
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .user-badge:hover {
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
-      border-color: var(--neon-cyan);
-      transform: scale(1.02);
-    }
-    .user-badge .edit-icon {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      font-size: 0.75rem;
-    }
-    .user-badge:hover .edit-icon { opacity: 1; }
-    .tabs {
-      display: flex; gap: 0.5rem;
-      margin-bottom: 2rem;
-      background: var(--surface);
-      padding: 0.5rem;
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow), 0 0 30px rgba(0, 240, 255, 0.05);
-      border: 1px solid var(--border);
-      overflow-x: auto;
-      backdrop-filter: blur(10px);
-    }
-    .tab-btn {
-      position: relative;
-      display: flex; align-items: center; gap: 0.5rem;
-      padding: 0.625rem 1.25rem;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text2);
-      white-space: nowrap;
-      cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.3s ease;
-      overflow: hidden;
-    }
-    .tab-btn::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 50%; right: 50%;
-      height: 2px;
-      background: var(--neon-cyan);
-      transition: all 0.3s ease;
-    }
-    .tab-btn:hover {
-      color: var(--neon-cyan);
-      background: rgba(0, 240, 255, 0.08);
-      border-color: rgba(0, 240, 255, 0.2);
-    }
-    .tab-btn:hover::after { left: 20%; right: 20%; }
-    .tab-btn.active {
-      color: var(--neon-cyan);
-      background: rgba(0, 240, 255, 0.12);
-      border-color: rgba(0, 240, 255, 0.3);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
-    }
-    .tab-btn.active::after { left: 10%; right: 10%; }
-    .tab-btn svg { width: 18px; height: 18px; }
-    .panel {
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      padding: 1.75rem;
-      box-shadow: var(--shadow), 0 0 40px rgba(0, 240, 255, 0.05);
-      border: 1px solid var(--border);
-      min-height: 500px;
-      backdrop-filter: blur(20px);
-      position: relative;
-      overflow: hidden;
-    }
-    .panel::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
-      opacity: 0.5;
-    }
-    .panel h3 {
-      font-family: var(--font-display);
-      font-size: 1rem; font-weight: 600;
-      margin-bottom: 1.25rem;
-      color: var(--neon-cyan);
-      letter-spacing: 0.05em;
-    }
-    .form-row { display: flex; gap: 0.875rem; margin-bottom: 0.875rem; }
-    .form-row input, .form-row select { flex: 1; }
-    .btn-primary {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      color: var(--bg);
-      padding: 0.625rem 1.5rem;
-      border-radius: var(--radius);
-      font-weight: 700;
-      font-size: 0.9375rem;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-      position: relative;
-      overflow: hidden;
-      border: 1px solid rgba(0, 240, 255, 0.3);
-      font-family: var(--font-display);
-      letter-spacing: 0.03em;
-    }
-    .btn-primary::before {
-      content: '';
-      position: absolute;
-      top: 0; left: -100%; width: 100%; height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      transition: left 0.5s ease;
-    }
-    .btn-primary:hover::before { left: 100%; }
-    .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5), 0 0 60px rgba(176, 38, 255, 0.2);
-    }
-    .btn-primary:active:not(:disabled) { transform: translateY(0) scale(0.98); }
-    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
-    .btn-icon {
-      padding: 0.5rem;
-      color: var(--text3);
-      border-radius: var(--radius);
-      border: 1px solid transparent;
-      transition: all 0.3s ease;
-    }
-    .btn-icon:hover {
-      color: var(--neon-red);
-      background: rgba(255, 42, 109, 0.1);
-      border-color: rgba(255, 42, 109, 0.3);
-      box-shadow: 0 0 15px rgba(255, 42, 109, 0.2);
-      transform: rotate(5deg);
-    }
-    .card {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 1.125rem;
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 0.625rem;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: default;
-      position: relative;
-      overflow: hidden;
-    }
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 3px; height: 100%;
-      background: linear-gradient(180deg, var(--neon-cyan), var(--neon-purple));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .card:hover {
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.15), 0 0 50px rgba(176, 38, 255, 0.08);
-      border-color: rgba(0, 240, 255, 0.4);
-      transform: translateX(4px);
-    }
-    .card:hover::before { opacity: 1; }
-    .card.completed { opacity: 0.5; }
-    .card.completed h4 { text-decoration: line-through; color: var(--text3); }
-    .card-info { display: flex; align-items: center; gap: 0.875rem; flex: 1; }
-    .check-btn {
-      width: 24px; height: 24px;
-      border: 2px solid var(--border);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--neon-green);
-      font-size: 0.875rem; flex-shrink: 0;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .check-btn:hover {
-      border-color: var(--neon-green);
-      box-shadow: 0 0 10px rgba(57, 255, 20, 0.3);
-    }
-    .check-btn.checked {
-      background: var(--neon-green);
-      border-color: var(--neon-green);
-      color: var(--bg);
-      box-shadow: 0 0 15px rgba(57, 255, 20, 0.4);
-    }
-    .card h4 { font-size: 0.9375rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text); }
-    .card-meta { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8125rem; color: var(--text3); font-family: var(--font-mono); }
-    .badge {
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      padding: 0.25rem 0.5rem;
-      border-radius: var(--radius);
-      color: var(--neon-cyan);
-      font-size: 0.6875rem;
-      font-weight: 600;
-    }
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 1.75rem; }
-    .stat-card {
-      display: flex; align-items: center; gap: 1rem;
-      padding: 1.25rem;
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
-    }
-    .stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    }
-    .stat-card.income { border-left: 3px solid var(--neon-green); }
-    .stat-card.income:hover { box-shadow: 0 0 25px rgba(57, 255, 20, 0.15); }
-    .stat-card.expense { border-left: 3px solid var(--neon-red); }
-    .stat-card.expense:hover { box-shadow: 0 0 25px rgba(255, 42, 109, 0.15); }
-    .stat-card.balance.positive { border-left: 3px solid var(--neon-green); }
-    .stat-card.balance.negative { border-left: 3px solid var(--neon-red); }
-    .stat-label { font-size: 0.75rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--font-display); }
-    .stat-value { font-size: 1.25rem; font-weight: 700; font-family: var(--font-mono); color: var(--text); }
-    .type-toggle { display: flex; gap: 0.5rem; margin-bottom: 0.875rem; }
-    .type-toggle button {
-      flex: 1; padding: 0.625rem;
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 600;
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      color: var(--text2);
-      font-family: var(--font-display);
-      letter-spacing: 0.03em;
-      transition: all 0.3s ease;
-    }
-    .type-toggle button:hover {
-      border-color: var(--neon-cyan);
-      color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.1);
-    }
-    .type-toggle button.active {
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      color: var(--bg);
-      border-color: transparent;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-    }
-    .entry-card {
-      display: flex; justify-content: space-between;
-      padding: 1rem 1.25rem;
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      margin-bottom: 0.625rem;
-      background: rgba(18, 18, 30, 0.6);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .entry-card:hover {
-      transform: translateX(4px);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
-    }
-    .entry-card.income { border-left: 3px solid var(--neon-green); }
-    .entry-card.expense { border-left: 3px solid var(--neon-red); }
-    .entry-amount { font-family: var(--font-mono); font-weight: 700; font-size: 1rem; }
-    .entry-amount.income { color: var(--neon-green); text-shadow: 0 0 10px rgba(57, 255, 20, 0.3); }
-    .entry-amount.expense { color: var(--neon-red); text-shadow: 0 0 10px rgba(255, 42, 109, 0.3); }
-    .pomodoro { display: flex; flex-direction: column; align-items: center; gap: 2.5rem; padding: 1rem; }
-    .presets { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
-    .preset {
-      display: flex; flex-direction: column; align-items: center; gap: 0.375rem;
-      padding: 1rem 1.5rem;
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: var(--text2);
-      cursor: pointer;
-      font-family: var(--font-display);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .preset::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: -1;
-    }
-    .preset:hover {
-      border-color: var(--neon-cyan);
-      color: var(--neon-cyan);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-      transform: translateY(-2px);
-    }
-    .preset.active {
-      color: var(--bg);
-      border-color: transparent;
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
-    }
-    .preset.active::before { opacity: 1; }
-    .timer-circle { position: relative; width: 280px; height: 280px; }
-    .timer-circle svg { width: 100%; height: 100%; transform: rotate(-90deg); filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.3)); }
-    .timer-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; }
-    .timer-text span {
-      font-family: var(--font-mono);
-      font-size: 4rem; font-weight: 700;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-magenta));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 0 15px rgba(0, 240, 255, 0.3));
-    }
-    .timer-controls { display: flex; gap: 1.5rem; }
-    .ctrl-btn {
-      display: flex; align-items: center; justify-content: center;
-      width: 64px; height: 64px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      color: var(--bg);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.3);
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .ctrl-btn:hover {
-      transform: scale(1.1);
-      box-shadow: 0 0 40px rgba(0, 240, 255, 0.5);
-    }
-    .ctrl-btn:active { transform: scale(0.95); }
-    .ctrl-btn.ghost {
-      background: rgba(18, 18, 30, 0.6);
-      color: var(--text2);
-      border: 1px solid var(--border);
-      box-shadow: none;
-    }
-    .ctrl-btn.ghost:hover {
-      border-color: var(--neon-cyan);
-      color: var(--neon-cyan);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-    }
-    .kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-    .column {
-      background: rgba(18, 18, 30, 0.4);
-      border-radius: var(--radius);
-      padding: 1rem;
-      border: 1px solid var(--border2);
-      backdrop-filter: blur(10px);
-    }
-    .col-header {
-      display: flex; align-items: center; gap: 0.625rem;
-      padding-bottom: 0.75rem;
-      border-bottom: 2px solid;
-      margin-bottom: 0.75rem;
-    }
-    .col-dot { width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
-    .col-header h4 { font-family: var(--font-display); font-size: 0.875rem; font-weight: 600; flex: 1; letter-spacing: 0.03em; }
-    .col-count {
-      font-size: 0.75rem; color: var(--text3);
-      background: rgba(0, 240, 255, 0.1);
-      padding: 0.25rem 0.625rem;
-      border-radius: 999px;
-      border: 1px solid var(--border);
-      font-family: var(--font-mono);
-    }
-    .task-card {
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 0.875rem;
-      margin-bottom: 0.625rem;
-      cursor: grab;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-    .task-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 2px;
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .task-card:hover {
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.15);
-      border-color: rgba(0, 240, 255, 0.3);
-      transform: translateY(-2px);
-    }
-    .task-card:hover::before { opacity: 1; }
-    .task-card.completed { opacity: 0.5; }
-    .task-card.completed .task-title { text-decoration: line-through; color: var(--text3); }
-    .radar-container { width: 100%; max-width: 450px; aspect-ratio: 1; margin: 0 auto; }
-    .skill-legend { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-top: 1.5rem; }
-    .skill-item {
-      display: flex; align-items: center; gap: 0.625rem;
-      font-size: 0.875rem;
-      padding: 0.5rem 0.75rem;
-      background: rgba(0, 240, 255, 0.05);
-      border: 1px solid var(--border2);
-      border-radius: var(--radius);
-      font-family: var(--font-mono);
-    }
-    .skill-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--neon-cyan); box-shadow: 0 0 8px var(--neon-cyan); }
-    .chat {
-      display: flex; flex-direction: column;
-      height: calc(100vh - 120px);
-      max-width: 750px;
-      margin: 0 auto;
-      background: var(--surface);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border);
-      overflow: hidden;
-      box-shadow: var(--shadow), 0 0 50px rgba(0, 240, 255, 0.05);
-      backdrop-filter: blur(20px);
-    }
-    .chat-header {
-      display: flex; align-items: center; gap: 0.75rem;
-      padding: 1.25rem 1.5rem;
-      background: rgba(0, 240, 255, 0.05);
-      border-bottom: 1px solid var(--border);
-    }
-    .chat-header h3 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; letter-spacing: 0.03em; }
-    .messages { flex: 1; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
-    .message { display: flex; gap: 0.875rem; max-width: 80%; }
-    .message.own { align-self: flex-end; flex-direction: row-reverse; }
-    .msg-avatar {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.125rem;
-      flex-shrink: 0;
-      box-shadow: 0 0 10px rgba(0, 240, 255, 0.1);
-    }
-    .msg-content {
-      display: flex; flex-direction: column; gap: 0.375rem;
-      background: rgba(18, 18, 30, 0.8);
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      border-bottom-left-radius: 4px;
-      border: 1px solid var(--border2);
-      backdrop-filter: blur(10px);
-    }
-    .message.own .msg-content {
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(176, 38, 255, 0.15));
-      color: var(--text);
-      border-bottom-left-radius: var(--radius);
-      border-bottom-right-radius: 4px;
-      border-color: rgba(0, 240, 255, 0.3);
-    }
-    .msg-sender { font-size: 0.75rem; font-weight: 600; color: var(--neon-cyan); font-family: var(--font-display); }
-    .message.own .msg-sender { color: var(--neon-magenta); }
-    .msg-time { font-size: 0.6875rem; color: var(--text3); align-self: flex-end; font-family: var(--font-mono); }
-    .chat-input-area {
-      display: flex; gap: 0.75rem;
-      padding: 1rem 1.25rem;
-      border-top: 1px solid var(--border);
-      background: rgba(18, 18, 30, 0.6);
-    }
-    .chat-input {
-      flex: 1;
-      border: 1px solid var(--border);
-      background: rgba(18, 18, 30, 0.8);
-      color: var(--text);
-    }
-    .chat-input:focus { background: rgba(18, 18, 30, 0.9); }
-    .send-btn {
-      padding: 0.75rem;
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      color: var(--bg);
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-    .send-btn:hover {
-      transform: scale(1.1) rotate(-5deg);
-      box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
-    }
-    .profiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
-    .profile-card {
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      display: flex; flex-direction: column; align-items: center; gap: 1rem;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    .profile-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 3px;
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .profile-card:hover {
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.15), 0 10px 40px rgba(0, 0, 0, 0.3);
-      border-color: rgba(0, 240, 255, 0.3);
-      transform: translateY(-5px);
-    }
-    .profile-card:hover::before { opacity: 1; }
-    .prof-avatar {
-      position: relative;
-      width: 72px; height: 72px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0, 240, 255, 0.1);
-      border-radius: 50%;
-      font-size: 2.25rem;
-      border: 2px solid var(--border);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.1);
-      transition: all 0.3s ease;
-    }
-    .profile-card:hover .prof-avatar {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
-      transform: scale(1.05);
-    }
-    .prof-status {
-      position: absolute; bottom: 3px; right: 3px;
-      width: 16px; height: 16px;
-      border-radius: 50%;
-      border: 3px solid var(--bg);
-    }
-    .prof-status.online { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
-    .prof-status.offline { background: var(--text3); }
-    .profile-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; }
-    .prof-actions { display: flex; gap: 0.625rem; width: 100%; }
-    .prof-actions button {
-      flex: 1; padding: 0.625rem;
-      border-radius: var(--radius);
-      font-size: 0.8125rem;
-      font-weight: 600;
-      border: 1px solid var(--border);
-      background: rgba(18, 18, 30, 0.6);
-      color: var(--text2);
-      font-family: var(--font-display);
-      transition: all 0.3s ease;
-    }
-    .prof-actions button:first-child {
-      color: var(--neon-cyan);
-      border-color: rgba(0, 240, 255, 0.3);
-    }
-    .prof-actions button:first-child:hover {
-      background: rgba(0, 240, 255, 0.1);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
-      transform: translateY(-2px);
-    }
-    .prof-actions button:last-child { color: var(--text3); }
-    .prof-actions button:last-child:hover {
-      color: var(--neon-red);
-      border-color: rgba(255, 42, 109, 0.3);
-      background: rgba(255, 42, 109, 0.1);
-      box-shadow: 0 0 15px rgba(255, 42, 109, 0.15);
-      transform: translateY(-2px);
-    }
-
-    /* ===== PRESENCE PANEL TOGGLE ===== */
-    .presence {
-      position: fixed; right: 0; top: 0;
-      width: 220px; height: 100vh;
-      background: rgba(10, 10, 15, 0.85);
-      border-left: 1px solid var(--border);
-      padding: 1.25rem 0.75rem;
-      overflow-y: auto;
-      backdrop-filter: blur(20px);
-      z-index: 100;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s ease;
-    }
-    .presence.collapsed {
-      transform: translateX(calc(100% - 44px));
-      width: 44px;
-      padding: 1.25rem 0.5rem;
-      overflow: visible;
-    }
-    .presence.collapsed .presence-content {
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
-    }
-    .presence.collapsed .presence-toggle-btn {
-      transform: rotate(180deg);
-    }
-    .presence-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-      position: relative;
-    }
-    .presence h4 {
-      font-family: var(--font-display);
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      color: var(--neon-cyan);
-      text-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
-    }
-    .presence-toggle-btn {
-      width: 28px; height: 28px;
-      border-radius: 50%;
-      background: rgba(0, 240, 255, 0.1);
-      border: 1px solid var(--border);
-      color: var(--neon-cyan);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      flex-shrink: 0;
-      z-index: 10;
-    }
-    .presence-toggle-btn:hover {
-      background: rgba(0, 240, 255, 0.2);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-      transform: scale(1.1);
-    }
-    .presence.collapsed .presence-toggle-btn:hover {
-      transform: scale(1.1) rotate(180deg);
-    }
-    .presence-content {
-      transition: opacity 0.3s ease 0.1s;
-    }
-    .pres-user {
-      display: flex; align-items: center; gap: 0.875rem;
-      padding: 0.625rem;
-      border-radius: var(--radius);
-      transition: all 0.3s ease;
-      border: 1px solid transparent;
-    }
-    .pres-user:hover {
-      background: rgba(0, 240, 255, 0.05);
-      border-color: rgba(0, 240, 255, 0.2);
-    }
-    .pres-avatar {
-      position: relative;
-      width: 40px; height: 40px;
-      display: flex; align-items: center; justify-content: center;
-      background: rgba(0, 240, 255, 0.1);
-      border-radius: 50%;
-      font-size: 1.25rem;
-      border: 1px solid var(--border2);
-    }
-    .pres-ping {
-      position: absolute; bottom: -2px; right: -2px;
-      width: 12px; height: 12px;
-      background: var(--neon-green);
-      border-radius: 50%;
-      border: 2px solid var(--bg);
-      box-shadow: 0 0 10px var(--neon-green);
-      animation: ping 2s ease-in-out infinite;
-    }
-    @keyframes ping { 0%,100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
-    .pres-name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
-    .pres-status { font-size: 0.75rem; color: var(--text3); font-family: var(--font-mono); }
-
-    /* ===== USERNAME EDIT MODAL ===== */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 2rem;
-      width: 90%;
-      max-width: 420px;
-      box-shadow: 0 0 50px rgba(0, 240, 255, 0.15), 0 20px 60px rgba(0, 0, 0, 0.5);
-      transform: translateY(20px) scale(0.95);
-      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    .modal-overlay.active .modal-box {
-      transform: translateY(0) scale(1);
-    }
-    .modal-box::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta), var(--neon-purple));
-    }
-    .modal-box h3 {
-      font-family: var(--font-display);
-      font-size: 1.125rem;
-      color: var(--neon-cyan);
-      margin-bottom: 0.5rem;
-      letter-spacing: 0.03em;
-    }
-    .modal-box p {
-      color: var(--text2);
-      font-size: 0.875rem;
-      margin-bottom: 1.25rem;
-      line-height: 1.5;
-    }
-    .modal-box .emoji-picker {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1rem;
-      justify-content: center;
-    }
-    .modal-box .emoji-option {
-      width: 40px; height: 40px;
-      border-radius: 50%;
-      background: var(--surface-solid);
-      border: 2px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.25rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .modal-box .emoji-option:hover {
-      border-color: var(--neon-cyan);
-      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
-      transform: scale(1.15);
-    }
-    .modal-box .emoji-option.selected {
-      border-color: var(--neon-cyan);
-      background: rgba(0, 240, 255, 0.15);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-    }
-    .modal-actions {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: 1.25rem;
-    }
-    .modal-actions button {
-      flex: 1;
-      padding: 0.625rem;
-      border-radius: var(--radius);
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 0.875rem;
-      transition: all 0.3s ease;
-    }
-    .modal-actions .btn-cancel {
-      background: var(--surface-solid);
-      border: 1px solid var(--border);
-      color: var(--text2);
-    }
-    .modal-actions .btn-cancel:hover {
-      border-color: var(--neon-red);
-      color: var(--neon-red);
-      box-shadow: 0 0 15px rgba(255, 42, 109, 0.15);
-    }
-    .modal-actions .btn-save {
-      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      border: 1px solid transparent;
-      color: var(--bg);
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
-    }
-    .modal-actions .btn-save:hover {
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
-      transform: translateY(-2px);
-    }
-
-    .conn-manager { max-width: 750px; margin: 0 auto; }
-    .conn-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 1.75rem; padding-bottom: 1.25rem;
-      border-bottom: 1px solid var(--border2);
-    }
-    .mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.75rem; }
-    .mode-card {
-      padding: 1.5rem;
-      background: rgba(18, 18, 30, 0.6);
-      border: 2px solid var(--border);
-      border-radius: var(--radius-lg);
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      position: relative;
-      overflow: hidden;
-    }
-    .mode-card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(0, 240, 255, 0.05), rgba(176, 38, 255, 0.05));
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-    .mode-card:hover {
-      border-color: var(--neon-cyan);
-      transform: translateY(-4px);
-      box-shadow: 0 10px 40px rgba(0, 240, 255, 0.15);
-    }
-    .mode-card:hover::before { opacity: 1; }
-    .mode-card.active {
-      border-color: var(--neon-cyan);
-      background: rgba(0, 240, 255, 0.05);
-      box-shadow: 0 0 30px rgba(0, 240, 255, 0.2), inset 0 0 20px rgba(0, 240, 255, 0.05);
-    }
-    .mode-card.disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.8); }
-    .mode-card h4 { font-family: var(--font-display); font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.375rem; }
-    .mode-card p { font-size: 0.8125rem; color: var(--text3); }
-    .contact-panel {
-      background: rgba(18, 18, 30, 0.6);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 1.75rem;
-      margin-top: 1.5rem;
-      backdrop-filter: blur(20px);
-      position: relative;
-      overflow: hidden;
-    }
-    .contact-panel::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--neon-magenta), transparent);
-      opacity: 0.5;
-    }
-    .contact-panel h4 {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--neon-magenta);
-      margin-bottom: 1rem;
-      letter-spacing: 0.05em;
-    }
-    .contact-panel p { color: var(--text2); font-size: 0.875rem; margin-bottom: 1rem; }
-    .contact-panel input, .contact-panel textarea {
-      margin-bottom: 0.75rem;
-      border-color: rgba(255, 0, 255, 0.2);
-    }
-    .contact-panel input:focus, .contact-panel textarea:focus {
-      border-color: var(--neon-magenta);
-      box-shadow: 0 0 15px rgba(255, 0, 255, 0.2);
-    }
-    .btn-magenta {
-      background: linear-gradient(135deg, var(--neon-magenta), var(--neon-purple));
-      box-shadow: 0 0 20px rgba(255, 0, 255, 0.3);
-      border: 1px solid rgba(255, 0, 255, 0.3);
-    }
-    .btn-magenta:hover {
-      box-shadow: 0 0 30px rgba(255, 0, 255, 0.5), 0 0 60px rgba(176, 38, 255, 0.2);
-    }
-    .neon-text { text-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor; }
-    .conn-badge {
-      display: inline-flex; align-items: center; gap: 0.5rem;
-      padding: 0.375rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.8125rem;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      border: 1px solid;
-      transition: all 0.3s ease;
-    }
-    .conn-badge.online { color: var(--neon-green); border-color: var(--neon-green); background: rgba(57, 255, 20, 0.1); box-shadow: 0 0 10px rgba(57, 255, 20, 0.2); }
-    .conn-badge.offline { color: var(--neon-red); border-color: var(--neon-red); background: rgba(255, 42, 109, 0.1); box-shadow: 0 0 10px rgba(255, 42, 109, 0.2); }
-    .conn-badge.syncing { color: var(--neon-yellow); border-color: var(--neon-yellow); background: rgba(255, 240, 31, 0.1); box-shadow: 0 0 10px rgba(255, 240, 31, 0.2); animation: pulseGlow 1.5s infinite; }
-    @media (max-width: 1200px) {
-      .sidebar { width: 80px; align-items: center; padding: 1rem 0.5rem; }
-      .brand span:last-child, .nav-link span { display: none; }
-      .brand { justify-content: center; padding: 0.75rem 0.25rem 1.25rem; }
-      .main-content { margin-left: 80px; margin-right: 0; }
-      .presence { display: none; }
-      .kanban { grid-template-columns: 1fr; }
-      .stats { grid-template-columns: 1fr; }
-    }
-    @media (max-width: 768px) {
-      .sidebar { width: 100%; height: auto; bottom: 0; top: auto; flex-direction: row; padding: 0.625rem; border-right: none; border-top: 1px solid var(--border); backdrop-filter: blur(30px); }
-      .brand { display: none; }
-      .nav-links { flex-direction: row; width: 100%; justify-content: space-around; }
-      .main-content { margin-left: 0; margin-bottom: 70px; padding: 1rem; }
-      .mode-grid { grid-template-columns: 1fr; }
-      .header { flex-direction: column; gap: 1rem; align-items: flex-start; }
-    }
-    .fade-in { animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-    .slide-in { animation: slideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-    @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
-    .pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
-    @keyframes pulseGlow {
-      0%, 100% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.2); }
-      50% { box-shadow: 0 0 40px rgba(0, 240, 255, 0.4), 0 0 60px rgba(176, 38, 255, 0.2); }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Forty-eight Kings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;800&family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --deep-wine: #2D0A1F;
+            --wine-accent: #8B1E3F;
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --glass-highlight: rgba(255, 255, 255, 0.25);
+            --text-primary: #F0E6D3;
+            --text-secondary: rgba(240, 230, 211, 0.6);
+            --accent: #8B1E3F;
+            --accent-light: #a63d5c;
+        }
+        * { -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { font-family: 'Inter', sans-serif; background: #0a0a0a; overflow: hidden; touch-action: pan-y; }
+        .chess-wallpaper { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; background: linear-gradient(135deg, #1a0510 0%, #2D0A1F 50%, #0f0208 100%); overflow: hidden; }
+        .chess-piece { position: absolute; font-size: 3rem; opacity: 0.15; filter: blur(1px); animation: float-down 20s linear infinite; color: #8B1E3F; }
+        @keyframes float-down { 0% { transform: translateY(-100px) rotate(0deg); opacity: 0; } 10% { opacity: 0.15; } 90% { opacity: 0.15; } 100% { transform: translateY(calc(100vh + 100px)) rotate(360deg); opacity: 0; } }
+        .glass-card { background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 var(--glass-highlight); position: relative; overflow: hidden; }
+        .glass-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.3) 50%, transparent 100%); }
+        .glass-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 50%, rgba(255, 255, 255, 0.05) 100%); pointer-events: none; }
+        .glass-button { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: scale(1); }
+        .glass-button:active { transform: scale(0.96); background: rgba(255, 255, 255, 0.15); }
+        .nav-drawer { position: fixed; top: 0; left: 0; height: 100%; width: 280px; background: linear-gradient(180deg, rgba(45, 10, 31, 0.95) 0%, rgba(20, 5, 15, 0.98) 100%); backdrop-filter: blur(30px); z-index: 50; transform: translateX(-100%); transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); border-right: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 10px 0 40px rgba(0, 0, 0, 0.5); }
+        .nav-drawer.open { transform: translateX(0); }
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+        .drawer-overlay.open { opacity: 1; pointer-events: all; }
+        .radar-container { position: relative; width: 280px; height: 280px; }
+        .radar-axis { stroke: rgba(139, 30, 63, 0.3); stroke-width: 1; }
+        .radar-grid { fill: none; stroke: rgba(139, 30, 63, 0.2); stroke-width: 0.5; }
+        .radar-data { fill: rgba(139, 30, 63, 0.25); stroke: #8B1E3F; stroke-width: 2; filter: drop-shadow(0 0 8px rgba(139, 30, 63, 0.5)); transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .radar-point { fill: #F0E6D3; stroke: #8B1E3F; stroke-width: 2; cursor: pointer; transition: all 0.3s ease; }
+        .radar-point:hover { r: 8; fill: #fff; filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)); }
+        .radar-label { fill: var(--text-secondary); font-size: 12px; font-family: 'Inter', sans-serif; text-anchor: middle; dominant-baseline: middle; cursor: pointer; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; height: 20px; width: 20px; border-radius: 50%; background: linear-gradient(135deg, #8B1E3F, #5a1430); border: 2px solid rgba(255, 255, 255, 0.5); box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3); cursor: pointer; margin-top: -8px; }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(139, 30, 63, 0.5); border-radius: 2px; }
+        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; overflow-y: auto; overflow-x: hidden; opacity: 0; pointer-events: none; transform: translateX(20px); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); padding-top: 60px; padding-bottom: 80px; }
+        .screen.active { opacity: 1; pointer-events: all; transform: translateX(0); }
+        .tooltip { position: absolute; background: rgba(20, 5, 15, 0.95); border: 1px solid rgba(139, 30, 63, 0.5); padding: 12px 16px; border-radius: 12px; backdrop-filter: blur(10px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); pointer-events: none; opacity: 0; transform: translateY(10px) scale(0.95); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 100; max-width: 200px; }
+        .tooltip.show { opacity: 1; transform: translateY(0) scale(1); }
+        .oracle-card { background: linear-gradient(135deg, rgba(139, 30, 63, 0.2) 0%, rgba(45, 10, 31, 0.4) 100%); border: 1px solid rgba(139, 30, 63, 0.3); }
+        .theme-wine { --accent: #8B1E3F; --accent-light: #a63d5c; }
+        .theme-obsidian { --accent: #4a4a4a; --accent-light: #6a6a6a; }
+        .theme-crimson { --accent: #9b1b30; --accent-light: #c43e5a; }
+        .theme-gold { --accent: #b8860b; --accent-light: #daa520; }
+        .theme-baltic { --accent: #1e3a5f; --accent-light: #2e5a8f; }
+        .theme-spectrum { --accent: #8B1E3F; --accent-light: #a63d5c; }
+        .font-cinzel { font-family: 'Cinzel', serif; }
+        .font-playfair { font-family: 'Playfair Display', serif; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; }
+        .check-item { transition: all 0.3s ease; }
+        .check-item.checked { opacity: 0.5; text-decoration: line-through; }
+        .check-item.checked .check-circle { background: var(--accent); border-color: var(--accent); }
+        @keyframes haptic { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.98); } }
+        .haptic:active { animation: haptic 0.1s ease; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.open { opacity: 1; pointer-events: all; }
+        .modal-content { width: 100%; max-width: 400px; transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .modal-overlay.open .modal-content { transform: scale(1); }
+        .hidden { display: none !important; }
+        input[type="text"], input[type="number"], textarea, select { font-family: inherit; color: var(--text-primary); }
+        ::placeholder { color: rgba(240, 230, 211, 0.4); }
+    </style>
 <base target="_blank">
 </head>
-<body>
-<div class="app">
-    <nav class="sidebar">
-      <div class="brand">
-        <span>🦁</span>
-        <span>SuperProd</span>
-      </div>
-      <div class="nav-links">
-        <a class="nav-link active" onclick="showPage('office')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-          <span>Escritório</span>
-        </a>
-        <a class="nav-link" onclick="showPage('chat')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-          <span>Chat</span>
-        </a>
-        <a class="nav-link" onclick="showPage('community')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span>Comunidade</span>
-        </a>
-        <a class="nav-link" onclick="showPage('skills')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-          <span>Habilidades</span>
-        </a>
-        <a class="nav-link" onclick="showPage('connect')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-          <span>Conectar</span>
-        </a>
-      </div>
+<body class="theme-wine text-[var(--text-primary)]">
+
+    <div class="chess-wallpaper" id="wallpaper"></div>
+    <div class="fixed inset-0 z-[-1] backdrop-blur-[0px] transition-all duration-500" id="blurOverlay"></div>
+    <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+
+    <!-- MODAL UNIVERSAL -->
+    <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+        <div class="modal-content" id="modalContent" onclick="event.stopPropagation()"></div>
+    </div>
+
+    <nav class="nav-drawer" id="navDrawer">
+        <div class="p-6 h-full flex flex-col">
+            <div class="mb-8">
+                <div class="w-20 h-20 rounded-full mx-auto mb-4 border-2 border-[var(--accent)] overflow-hidden bg-gradient-to-br from-[var(--accent)] to-[var(--deep-wine)] flex items-center justify-center" id="navProfilePic">
+                    <span class="text-3xl">👑</span>
+                </div>
+                <h2 class="text-center font-cinzel text-xl font-semibold tracking-wider" id="navProfileName">Monarca</h2>
+                <p class="text-center text-sm text-[var(--text-secondary)] mt-1">Soberano do Sistema</p>
+            </div>
+            <div class="space-y-2 flex-1">
+                <button onclick="navigateTo('home')" class="w-full glass-card glass-button rounded-xl p-4 flex items-center gap-3 text-left">
+                    <span class="text-xl">🏰</span>
+                    <div><div class="font-medium">Trono Principal</div><div class="text-xs text-[var(--text-secondary)]">Visão geral do reino</div></div>
+                </button>
+                <button onclick="navigateTo('performance')" class="w-full glass-card glass-button rounded-xl p-4 flex items-center gap-3 text-left">
+                    <span class="text-xl">📊</span>
+                    <div><div class="font-medium">Meu Desempenho</div><div class="text-xs text-[var(--text-secondary)]">Métricas de soberania</div></div>
+                </button>
+                <button onclick="navigateTo('erudition')" class="w-full glass-card glass-button rounded-xl p-4 flex items-center gap-3 text-left">
+                    <span class="text-xl">📚</span>
+                    <div><div class="font-medium">Erudição</div><div class="text-xs text-[var(--text-secondary)]">Grimório de conhecimento</div></div>
+                </button>
+                <button onclick="navigateTo('finance')" class="w-full glass-card glass-button rounded-xl p-4 flex items-center gap-3 text-left">
+                    <span class="text-xl">💰</span>
+                    <div><div class="font-medium">Tesouraria</div><div class="text-xs text-[var(--text-secondary)]">Controle financeiro</div></div>
+                </button>
+                <button onclick="navigateTo('settings')" class="w-full glass-card glass-button rounded-xl p-4 flex items-center gap-3 text-left">
+                    <span class="text-xl">⚙️</span>
+                    <div><div class="font-medium">Engenharia Visual</div><div class="text-xs text-[var(--text-secondary)]">Configurações do sistema</div></div>
+                </button>
+            </div>
+            <div class="mt-auto pt-4 border-t border-[var(--glass-border)]">
+                <p class="text-xs text-center text-[var(--text-secondary)]">Forty-eight Kings v2.0</p>
+                <p class="text-xs text-center text-[var(--text-secondary)] opacity-50">Arquitetura Local-First</p>
+            </div>
+        </div>
     </nav>
 
-    <main class="main-content" id="main-content">
-      <div id="page-office" class="page">
-        <div class="header">
-          <div style="display:flex;align-items:center;gap:1rem;">
-            <h1>📝 Escritório</h1>
-            <span class="user-badge pulse-glow" id="user-badge" onclick="openUsernameModal()" title="Clique para editar">
-              🦁 Carregando...
-              <span class="edit-icon">✎</span>
-            </span>
-          </div>
-          <div style="display:flex;align-items:center;gap:1rem;">
-            <span id="firebase-status" class="conn-badge offline">● Offline</span>
-            <canvas id="mini-radar" width="100" height="100"></canvas>
-          </div>
-        </div>
-
-        <div class="tabs">
-          <button class="tab-btn active" onclick="showTab('routines')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span>Rotinas</span>
-          </button>
-          <button class="tab-btn" onclick="showTab('finance')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-            <span>Finanças</span>
-          </button>
-          <button class="tab-btn" onclick="showTab('pomodoro')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Pomodoro</span>
-          </button>
-          <button class="tab-btn" onclick="showTab('checklist')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span>Checklist</span>
-          </button>
-          <button class="tab-btn" onclick="showTab('library')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            <span>Biblioteca</span>
-          </button>
-        </div>
-
-        <div class="panel" id="panel-routines">
-          <div style="background:var(--surface);padding:1.5rem;border-radius:var(--radius);margin-bottom:1.25rem;border:1px solid var(--border);backdrop-filter:blur(10px);">
-            <h3>Nova Rotina</h3>
-            <div class="form-row">
-              <input type="text" id="routine-title" placeholder="Nome da rotina...">
-              <input type="time" id="routine-time" value="08:00" style="width:120px;">
-            </div>
-            <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.875rem;" id="days-selector"></div>
-            <div style="display:flex;gap:0.875rem;align-items:center;margin-bottom:0.875rem;">
-              <button id="alarm-toggle" class="btn-primary" style="background:var(--surface-solid);color:var(--text2);box-shadow:none;border:1px solid var(--border);" onclick="toggleAlarm()">
-                <span id="alarm-icon">🔔</span> Alarme ativo
-              </button>
-              <select id="alarm-sound">
-                <option value="gentle">Suave</option>
-                <option value="alert">Alerta</option>
-                <option value="chime">Sino</option>
-              </select>
-            </div>
-            <button class="btn-primary" onclick="addRoutine()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar Rotina
-            </button>
-          </div>
-          <div id="routines-list"></div>
-        </div>
-
-        <div class="panel" id="panel-finance" style="display:none;">
-          <div class="stats" id="finance-stats"></div>
-          <div style="background:var(--surface);padding:1.5rem;border-radius:var(--radius);margin-bottom:1.25rem;border:1px solid var(--border);backdrop-filter:blur(10px);">
-            <div class="type-toggle">
-              <button class="active" onclick="setFinanceType('expense')">Saída</button>
-              <button onclick="setFinanceType('income')">Entrada</button>
-            </div>
-            <div class="form-row">
-              <input type="number" id="finance-amount" placeholder="Valor (R$)" step="0.01">
-              <input type="text" id="finance-desc" placeholder="Descrição">
-            </div>
-            <div class="form-row">
-              <select id="finance-cat">
-                <option>Alimentação</option><option>Transporte</option><option>Moradia</option>
-                <option>Lazer</option><option>Saúde</option><option>Educação</option><option>Outros</option>
-              </select>
-              <input type="date" id="finance-date">
-            </div>
-            <button class="btn-primary" onclick="addFinance()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar Lançamento
-            </button>
-          </div>
-          <div id="finance-list"></div>
-        </div>
-
-        <div class="panel" id="panel-pomodoro" style="display:none;">
-          <div class="pomodoro">
-            <div class="presets">
-              <button class="preset active" onclick="setPomodoro(25)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/></svg>
-                <span>Foco</span><small>25min</small>
-              </button>
-              <button class="preset" onclick="setPomodoro(5)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                <span>Pausa Curta</span><small>5min</small>
-              </button>
-              <button class="preset" onclick="setPomodoro(15)">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
-                <span>Pausa Longa</span><small>15min</small>
-              </button>
-            </div>
-            <div class="timer-circle">
-              <svg viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(0,240,255,0.1)" stroke-width="3"/>
-                <circle id="timer-progress" cx="50" cy="50" r="45" fill="none" stroke="url(#timerGradient)" stroke-width="3" stroke-linecap="round"
-                  stroke-dasharray="283" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
-                <defs>
-                  <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" style="stop-color:#00f0ff"/>
-                    <stop offset="100%" style="stop-color:#ff00ff"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              <div class="timer-text"><span id="timer-display">25:00</span></div>
-            </div>
-            <div class="timer-controls">
-              <button class="ctrl-btn" id="timer-play" onclick="toggleTimer()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              </button>
-              <button class="ctrl-btn ghost" onclick="resetTimer()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-              </button>
-            </div>
-            <div style="display:flex;gap:2rem;font-size:0.9375rem;color:var(--text2);font-family:var(--font-mono);">
-              <span style="color:var(--neon-green);text-shadow:0 0 10px rgba(57,255,20,0.3);">✅ <span id="pomodoro-cycles">0</span> ciclos hoje</span>
-              <span style="color:var(--neon-cyan);text-shadow:0 0 10px rgba(0,240,255,0.3);">🧠 <span id="pomodoro-sessions">0</span> sessões</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="panel" id="panel-checklist" style="display:none;">
-          <div style="display:flex;gap:0.875rem;margin-bottom:1.25rem;">
-            <input type="text" id="task-input" placeholder="Adicionar nova tarefa..." style="flex:1;">
-            <button class="btn-primary" onclick="addTask()">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              Adicionar
-            </button>
-          </div>
-          <div class="kanban" id="kanban-board"></div>
-        </div>
-
-        <div class="panel" id="panel-library" style="display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-            <div style="display:flex;gap:0.5rem;">
-              <button class="btn-primary" style="background:var(--surface-solid);color:var(--text2);box-shadow:none;border:1px solid var(--border);" onclick="document.getElementById('file-upload').click()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                Upload
-              </button>
-              <input type="file" id="file-upload" multiple accept=".pdf,.txt,.png,.jpg" style="display:none;" onchange="handleFileUpload(event)">
-            </div>
-          </div>
-          <div id="files-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1.25rem;"></div>
-        </div>
-      </div>
-
-      <div id="page-chat" class="page" style="display:none;">
-        <div class="chat">
-          <div class="chat-header">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--neon-green);box-shadow:0 0 10px var(--neon-green);"></span>
-            <h3>💬 Chat em Tempo Real</h3>
-            <span id="chat-sync-badge" class="conn-badge offline" style="margin-left:auto;font-size:0.6875rem;">● Offline</span>
-          </div>
-          <div class="messages" id="chat-messages"></div>
-          <div class="chat-input-area">
-            <input type="text" class="chat-input" id="chat-input" placeholder="Digite uma mensagem..." onkeypress="if(event.key==='Enter')sendMessage()">
-            <button class="send-btn" onclick="sendMessage()">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div id="page-community" class="page" style="display:none;">
-        <div class="header">
-          <h1>👥 Comunidade</h1>
-          <div style="display:flex;align-items:center;gap:0.5rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:0.625rem 1rem;width:320px;backdrop-filter:blur(10px);">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" placeholder="Buscar usuários..." style="border:none;padding:0;background:transparent;color:var(--text);" oninput="filterProfiles(this.value)">
-          </div>
-        </div>
-        <div class="profiles" id="profiles-grid"></div>
-      </div>
-
-      <div id="page-skills" class="page" style="display:none;">
-        <div class="header"><h1>📊 Habilidades</h1></div>
-        <div class="panel" style="text-align:center;">
-          <canvas id="radar-chart" width="450" height="450" style="max-width:450px;margin:0 auto;"></canvas>
-          <div class="skill-legend" id="skill-legend"></div>
-        </div>
-      </div>
-
-      <div id="page-connect" class="page" style="display:none;">
-        <div class="header"><h1>🔗 Conectar</h1></div>
-        <div class="conn-manager">
-          <div class="conn-header">
-            <h3 style="font-family:var(--font-display);font-size:1.125rem;color:var(--neon-cyan);">Modo de Conexão</h3>
-            <div id="conn-status" class="conn-badge offline">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-              <span>Offline</span>
-            </div>
-          </div>
-          <div class="mode-grid">
-            <div class="mode-card" id="mode-local" onclick="setConnectionMode('local')">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00f0ff" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              <h4>Modo Local</h4>
-              <p>100% offline. Tudo no navegador.</p>
-            </div>
-            <div class="mode-card" id="mode-firebase" onclick="setConnectionMode('firebase')">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ff9e00" stroke-width="2"><path d="M8.5 14.5L2.5 8.5"/><path d="M15.5 14.5L21.5 8.5"/><path d="M12 2L12 22"/><path d="M2.5 8.5L12 2L21.5 8.5"/><path d="M8.5 14.5L12 22L15.5 14.5"/></svg>
-              <h4>Firebase</h4>
-              <p>Sincronização real-time na nuvem.</p>
-            </div>
-            <div class="mode-card disabled">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#b026ff" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
-              <h4>WebRTC P2P</h4>
-              <p>Direto entre navegadores.</p>
-            </div>
-            <div class="mode-card disabled">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#39ff14" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
-              <h4>Google Sheets</h4>
-              <p>Planilha como backend.</p>
-            </div>
-          </div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.75rem;backdrop-filter:blur(10px);">
-            <h4 style="font-family:var(--font-display);font-size:1rem;color:var(--neon-cyan);margin-bottom:0.75rem;">📋 Instruções</h4>
-            <p style="color:var(--text2);font-size:0.9375rem;margin:0.5rem 0 1.25rem;line-height:1.6;">
-              No momento você está no <strong style="color:var(--neon-cyan);" id="current-mode-text">Modo Local</strong>. 
-              <span id="firebase-instructions" style="display:none;">Dados sincronizados em tempo real com o Firebase Firestore. Suas rotinas, finanças, checklist e chat são salvos na nuvem automaticamente.</span>
-              <span id="local-instructions">Todos os dados ficam apenas no seu navegador. Ative o Firebase para sincronizar entre dispositivos.</span>
-            </p>
-            <div id="firebase-config-display" style="background:var(--bg2);padding:1rem 1.25rem;border-radius:var(--radius);font-family:var(--font-mono);font-size:0.8125rem;border:1px solid var(--border2);color:var(--neon-cyan);display:none;">
-              <div style="color:var(--neon-green);margin-bottom:0.5rem;">✅ Firebase conectado</div>
-              Projeto: neon-18834<br>
-              Auth: Anônimo ativo<br>
-              Firestore: Real-time sync
-            </div>
-          </div>
-
-          <div class="contact-panel">
-            <h4>📨 Fale Conosco</h4>
-            <p>Encontrou um bug, tem uma sugestão futurista ou quer colaborar? Envie uma mensagem!</p>
-            <form action="https://formspree.io/f/mojbvqyq" method="POST">
-              <input type="text" name="name" placeholder="Seu nome" required>
-              <input type="email" name="email" placeholder="Seu e-mail" required>
-              <textarea name="message" rows="4" placeholder="Sua mensagem..." required></textarea>
-              <input type="hidden" name="_replyto" value="antonny135121215@proton.me">
-              <button type="submit" class="btn-primary btn-magenta" style="width:100%;justify-content:center;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                Enviar Mensagem
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </main>
-
-    <!-- Presence Bar com Toggle -->
-    <aside class="presence" id="presence-panel">
-      <div class="presence-header">
-        <h4>Online</h4>
-        <button class="presence-toggle-btn" id="presence-toggle" onclick="togglePresencePanel()" title="Recolher/Expandir">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    <header class="fixed top-0 left-0 right-0 z-30 h-14 flex items-center justify-between px-4 glass-card border-x-0 border-t-0 rounded-none">
+        <button onclick="toggleDrawer()" class="w-10 h-10 flex items-center justify-center rounded-full active:bg-white/10 transition-colors">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-      </div>
-      <div class="presence-content" id="presence-content">
-        <div id="presence-list"></div>
-      </div>
-    </aside>
-  </div>
+        <h1 class="font-cinzel text-lg font-semibold tracking-widest" id="headerTitle">FORTY-EIGHT KINGS</h1>
+        <div class="w-10"></div>
+    </header>
 
-  <!-- Username Edit Modal -->
-  <div class="modal-overlay" id="username-modal">
-    <div class="modal-box">
-      <h3>✏️ Editar Perfil</h3>
-      <p>Escolha um emoji e digite seu nome de exibição. Isso será sincronizado localmente e na nuvem (Firebase).</p>
-      <div class="emoji-picker" id="emoji-picker"></div>
-      <input type="text" id="edit-username" placeholder="Seu nome..." maxlength="30">
-      <div class="modal-actions">
-        <button class="btn-cancel" onclick="closeUsernameModal()">Cancelar</button>
-        <button class="btn-save" onclick="saveUsername()">Salvar Alterações</button>
-      </div>
+    <div class="tooltip" id="tooltip">
+        <div class="font-semibold text-[var(--accent-light)] mb-1" id="tooltipTitle"></div>
+        <div class="text-sm text-[var(--text-secondary)]" id="tooltipDesc"></div>
+        <div class="mt-2 text-xs font-mono text-[var(--accent)]" id="tooltipValue"></div>
     </div>
-  </div>
-<script>
-// ============================================
-// SUPERPRODUTIVIDADE - NEON FIREBASE EDITION v2
-// Melhorias: Toggle Presença, Limpeza Rotinas, Editar Nome
-// ============================================
 
-const $ = id => document.getElementById(id);
-const DAYS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-const ALLOWED_ANIMALS = ['🦁','🐯','🐱','🐆','🐅','🐈','🐈‍⬛','🐝','🦋','🐜','🐞','🦗','🪲','🪳','🦟','🪰'];
-const ADJECTIVES = ['Veloz','Astuto','Brilhante','Feroz','Ágil','Nobre','Místico','Radiante','Sábio','Corajoso'];
-
-function generateUser() {
-  const emoji = ALLOWED_ANIMALS[Math.floor(Math.random() * ALLOWED_ANIMALS.length)];
-  const name = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)] + ' ' + emoji;
-  return { id: 'user-' + Date.now(), name, emoji, createdAt: Date.now() };
-}
-
-function formatCurrency(v) {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-}
-
-function formatTime(sec) {
-  const m = Math.floor(sec / 60).toString().padStart(2, '0');
-  const s = (sec % 60).toString().padStart(2, '0');
-  return m + ':' + s;
-}
-
-function autoCategorize(desc) {
-  const cats = {
-    'Alimentação': ['mercado','restaurante','lanche','pizza','ifood'],
-    'Transporte': ['uber','99','taxi','ônibus','gasolina'],
-    'Moradia': ['aluguel','condomínio','luz','água','internet'],
-    'Lazer': ['cinema','show','bar','viagem','netflix'],
-    'Saúde': ['farmácia','remédio','médico','academia'],
-    'Educação': ['curso','livro','faculdade','escola']
-  };
-  const d = desc.toLowerCase();
-  for (const [cat, keys] of Object.entries(cats)) {
-    if (keys.some(k => d.includes(k))) return cat;
-  }
-  return 'Outros';
-}
-
-// ===== ESTADO GLOBAL =====
-let state = {
-  user: null,
-  routines: [],
-  finances: [],
-  pomodoro: { sessions: [], cycles: 0 },
-  checklist: [],
-  files: [],
-  chat: [],
-  profiles: [],
-  presence: [],
-  skills: { execution: 10, focus: 10, discipline: 10, organization: 10, consistency: 10 },
-  currentTab: 'routines',
-  financeType: 'expense',
-  alarmEnabled: true,
-  pomodoroRunning: false,
-  pomodoroTime: 25 * 60,
-  pomodoroDuration: 25 * 60,
-  timerWorker: null,
-  connectionMode: 'local',
-  firebaseReady: false,
-  firebaseUser: null,
-  presenceCollapsed: false
-};
-
-// ===== FIREBASE CONFIG =====
-const firebaseConfig = {
-  apiKey: "AIzaSyA7cxTiU0EHxuVWtL3z5-x5UP1Wa6h_FvU",
-  authDomain: "neon-18834.firebaseapp.com",
-  projectId: "neon-18834",
-  storageBucket: "neon-18834.firebasestorage.app",
-  messagingSenderId: "252182690759",
-  appId: "1:252182690759:web:908e9b43a36a34dee937e2",
-  measurementId: "G-ZTTCCVM8V2"
-};
-
-let db = null;
-let auth = null;
-let firebaseApp = null;
-let unsubRoutines = null;
-let unsubChat = null;
-let unsubPresence = null;
-
-// ===== INICIALIZAR FIREBASE =====
-function initFirebase() {
-  try {
-    if (typeof firebase === 'undefined') {
-      console.warn('Firebase SDK não carregado');
-      return false;
-    }
-    firebaseApp = firebase.initializeApp(firebaseConfig);
-    db = firebase.firestore();
-    auth = firebase.auth();
-    db.enablePersistence({ synchronizeTabs: true }).catch(err => {
-      if (err.code === 'failed-precondition') console.warn('Persistência falhou: múltiplas abas');
-      else if (err.code === 'unimplemented') console.warn('Persistência não suportada');
-    });
-    return true;
-  } catch (e) {
-    console.error('Erro ao inicializar Firebase:', e);
-    return false;
-  }
-}
-
-function signInAnon() {
-  if (!auth) return Promise.reject('Auth não inicializado');
-  return auth.signInAnonymously().then(cred => {
-    state.firebaseUser = cred.user;
-    state.firebaseReady = true;
-    updateConnectionStatus('online');
-    return cred.user;
-  }).catch(err => {
-    console.error('Erro auth:', err);
-    updateConnectionStatus('offline');
-    throw err;
-  });
-}
-
-function updateConnectionStatus(status) {
-  const badges = document.querySelectorAll('.conn-badge');
-  badges.forEach(badge => {
-    badge.className = 'conn-badge ' + status;
-    if (status === 'online') badge.innerHTML = '● Firebase Online';
-    else if (status === 'syncing') badge.innerHTML = '◐ Sincronizando...';
-    else badge.innerHTML = '● Offline';
-  });
-  const connStatus = $('conn-status');
-  if (connStatus) {
-    connStatus.className = 'conn-badge ' + status;
-    if (status === 'online') {
-      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Firebase Online</span>';
-    } else if (status === 'syncing') {
-      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>Sincronizando...</span>';
-    } else {
-      connStatus.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.58 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg><span>Offline</span>';
-    }
-  }
-}
-
-// ===== FIRESTORE SYNC =====
-function getUserDocRef() {
-  if (!db || !state.firebaseUser) return null;
-  return db.collection('users').doc(state.firebaseUser.uid);
-}
-
-function syncToFirestore() {
-  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
-  updateConnectionStatus('syncing');
-  const userRef = getUserDocRef();
-  if (!userRef) return;
-  const data = {
-    routines: state.routines,
-    finances: state.finances,
-    checklist: state.checklist,
-    skills: state.skills,
-    pomodoro: state.pomodoro,
-    user: { id: state.user.id, name: state.user.name, emoji: state.user.emoji },
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  userRef.set(data, { merge: true }).then(() => {
-    updateConnectionStatus('online');
-  }).catch(err => {
-    console.error('Sync error:', err);
-    updateConnectionStatus('offline');
-  });
-}
-
-function listenFromFirestore() {
-  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
-  const userRef = getUserDocRef();
-  if (!userRef) return;
-  if (unsubRoutines) unsubRoutines();
-  unsubRoutines = userRef.onSnapshot(doc => {
-    if (!doc.exists) return;
-    const data = doc.data();
-    if (data.routines) state.routines = data.routines;
-    if (data.finances) state.finances = data.finances;
-    if (data.checklist) state.checklist = data.checklist;
-    if (data.skills) state.skills = data.skills;
-    if (data.pomodoro) state.pomodoro = data.pomodoro;
-    renderRoutines();
-    renderFinances();
-    renderChecklist();
-    drawMiniRadar();
-    updateTimerDisplay();
-    saveLocal();
-  }, err => console.error('Listen error:', err));
-}
-
-// ===== CHAT GLOBAL =====
-function sendMessageToFirebase(text) {
-  if (!db || state.connectionMode !== 'firebase') return false;
-  const msg = {
-    senderId: state.user.id,
-    senderName: state.user.name,
-    senderEmoji: state.user.emoji,
-    content: text,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
-  db.collection('chat').add(msg).catch(err => console.error('Chat error:', err));
-  return true;
-}
-
-function listenChatFromFirebase() {
-  if (!db || state.connectionMode !== 'firebase') return;
-  if (unsubChat) unsubChat();
-  unsubChat = db.collection('chat')
-    .orderBy('timestamp', 'desc')
-    .limit(50)
-    .onSnapshot(snapshot => {
-      const msgs = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (data.timestamp) {
-          msgs.unshift({
-            id: doc.id,
-            senderId: data.senderId,
-            senderName: data.senderName,
-            senderEmoji: data.senderEmoji,
-            content: data.content,
-            timestamp: data.timestamp.toMillis ? data.timestamp.toMillis() : Date.now()
-          });
-        }
-      });
-      state.chat = msgs;
-      renderChat();
-    }, err => console.error('Chat listen error:', err));
-}
-
-// ===== PRESENCE GLOBAL =====
-function updateFirebasePresence() {
-  if (!db || !state.firebaseUser || state.connectionMode !== 'firebase') return;
-  const presenceRef = db.collection('presence').doc(state.firebaseUser.uid);
-  presenceRef.set({
-    name: state.user.name,
-    emoji: state.user.emoji,
-    isOnline: true,
-    lastSeen: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  window.addEventListener('beforeunload', () => {
-    presenceRef.update({ isOnline: false });
-  });
-}
-
-function listenGlobalPresence() {
-  if (!db || state.connectionMode !== 'firebase') return;
-  if (unsubPresence) unsubPresence();
-  unsubPresence = db.collection('presence')
-    .where('isOnline', '==', true)
-    .onSnapshot(snapshot => {
-      const onlineUsers = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        if (doc.id !== state.firebaseUser?.uid) {
-          onlineUsers.push({
-            id: doc.id,
-            name: data.name || 'Anônimo',
-            emoji: data.emoji || '👤',
-            isOnline: true
-          });
-        }
-      });
-      state.presence = onlineUsers;
-      renderPresence();
-    });
-}
-
-// ===== PERSISTÊNCIA LOCAL =====
-function saveLocal() {
-  const toSave = {
-    user: state.user,
-    routines: state.routines,
-    finances: state.finances,
-    pomodoro: state.pomodoro,
-    checklist: state.checklist,
-    files: state.files.map(f => ({ id: f.id, name: f.name, size: f.size, uploadedAt: f.uploadedAt })),
-    chat: state.chat,
-    skills: state.skills,
-    connectionMode: state.connectionMode,
-    presenceCollapsed: state.presenceCollapsed
-  };
-  localStorage.setItem('superprod_state', JSON.stringify(toSave));
-}
-
-function loadLocal() {
-  const saved = localStorage.getItem('superprod_state');
-  if (saved) {
-    const data = JSON.parse(saved);
-    if (data.user) state.user = data.user;
-    if (data.routines) state.routines = data.routines;
-    if (data.finances) state.finances = data.finances;
-    if (data.pomodoro) state.pomodoro = data.pomodoro;
-    if (data.checklist) state.checklist = data.checklist;
-    if (data.skills) state.skills = data.skills;
-    if (data.chat) state.chat = data.chat;
-    if (data.connectionMode) state.connectionMode = data.connectionMode;
-    if (data.presenceCollapsed !== undefined) state.presenceCollapsed = data.presenceCollapsed;
-  }
-  if (!state.user) state.user = generateUser();
-}
-
-function saveState() {
-  saveLocal();
-  if (state.connectionMode === 'firebase' && state.firebaseReady) {
-    syncToFirestore();
-  }
-}
-
-// ===== TOGGLE PRESENCE PANEL =====
-function togglePresencePanel() {
-  state.presenceCollapsed = !state.presenceCollapsed;
-  const panel = $('presence-panel');
-  const main = $('main-content');
-
-  if (state.presenceCollapsed) {
-    panel.classList.add('collapsed');
-    main.classList.add('presence-collapsed');
-  } else {
-    panel.classList.remove('collapsed');
-    main.classList.remove('presence-collapsed');
-  }
-  saveLocal();
-}
-
-// ===== USERNAME EDIT MODAL =====
-let selectedEmoji = null;
-
-function openUsernameModal() {
-  const modal = $('username-modal');
-  const picker = $('emoji-picker');
-  const input = $('edit-username');
-
-  // Popular emoji picker
-  picker.innerHTML = '';
-  selectedEmoji = state.user.emoji;
-  ALLOWED_ANIMALS.forEach(emoji => {
-    const div = document.createElement('div');
-    div.className = 'emoji-option' + (emoji === selectedEmoji ? ' selected' : '');
-    div.textContent = emoji;
-    div.onclick = () => {
-      document.querySelectorAll('.emoji-option').forEach(e => e.classList.remove('selected'));
-      div.classList.add('selected');
-      selectedEmoji = emoji;
-    };
-    picker.appendChild(div);
-  });
-
-  // Preencher nome atual
-  input.value = state.user.name.replace(state.user.emoji, '').trim();
-
-  modal.classList.add('active');
-}
-
-function closeUsernameModal() {
-  $('username-modal').classList.remove('active');
-}
-
-function saveUsername() {
-  const input = $('edit-username');
-  const newName = input.value.trim();
-
-  if (!newName) {
-    alert('Digite um nome válido!');
-    return;
-  }
-
-  const emoji = selectedEmoji || state.user.emoji;
-  const fullName = newName + ' ' + emoji;
-
-  // Atualizar estado
-  state.user.name = fullName;
-  state.user.emoji = emoji;
-
-  // Atualizar UI
-  $('user-badge').innerHTML = `${emoji} ${fullName} <span class="edit-icon">✎</span>`;
-
-  // Salvar
-  saveState();
-
-  // Se Firebase ativo, atualizar presença
-  if (state.connectionMode === 'firebase' && state.firebaseReady) {
-    updateFirebasePresence();
-    syncToFirestore();
-  }
-
-  closeUsernameModal();
-}
-
-// Fechar modal ao clicar fora
-$('username-modal').addEventListener('click', (e) => {
-  if (e.target === $('username-modal')) closeUsernameModal();
-});
-
-// ===== NAVEGAÇÃO =====
-function showPage(page) {
-  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-  $(`page-${page}`).style.display = 'block';
-  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-  event.target.closest('.nav-link').classList.add('active');
-  if (page === 'skills') drawRadar();
-  if (page === 'community') renderProfiles();
-  if (page === 'chat') renderChat();
-}
-
-function showTab(tab) {
-  state.currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-  event.target.closest('.tab-btn').classList.add('active');
-  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
-  $(`panel-${tab}`).style.display = 'block';
-}
-
-// ===== ROTINAS =====
-function initDaysSelector() {
-  const container = $('days-selector');
-  container.innerHTML = '';
-  DAYS.forEach((day, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'btn-primary';
-    btn.style.cssText = 'background:var(--surface-solid);color:var(--text2);padding:0.5rem 0.75rem;font-size:0.8125rem;min-width:48px;border:1px solid var(--border);font-family:var(--font-display);';
-    btn.textContent = day;
-    btn.dataset.day = i;
-    btn.onclick = function() {
-      this.classList.toggle('active');
-      this.style.background = this.classList.contains('active') ? 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))' : 'var(--surface-solid)';
-      this.style.color = this.classList.contains('active') ? 'var(--bg)' : 'var(--text2)';
-      this.style.borderColor = this.classList.contains('active') ? 'transparent' : 'var(--border)';
-      this.style.boxShadow = this.classList.contains('active') ? '0 0 15px rgba(0,240,255,0.3)' : 'none';
-    };
-    if (i >= 1 && i <= 5) {
-      btn.classList.add('active');
-      btn.style.background = 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))';
-      btn.style.color = 'var(--bg)';
-      btn.style.borderColor = 'transparent';
-      btn.style.boxShadow = '0 0 15px rgba(0,240,255,0.3)';
-    }
-    container.appendChild(btn);
-  });
-}
-
-function toggleAlarm() {
-  state.alarmEnabled = !state.alarmEnabled;
-  const btn = $('alarm-toggle');
-  const icon = $('alarm-icon');
-  if (state.alarmEnabled) {
-    btn.style.background = 'var(--surface-solid)';
-    btn.style.color = 'var(--text2)';
-    btn.style.boxShadow = 'none';
-    icon.textContent = '🔔';
-  } else {
-    btn.style.background = 'var(--surface-solid)';
-    btn.style.color = 'var(--text3)';
-    btn.style.boxShadow = 'none';
-    icon.textContent = '🔕';
-  }
-}
-
-function addRoutine() {
-  const titleInput = $('routine-title');
-  const timeInput = $('routine-time');
-  const title = titleInput.value.trim();
-
-  if (!title) {
-    titleInput.style.borderColor = 'var(--neon-red)';
-    titleInput.style.boxShadow = '0 0 15px rgba(255, 42, 109, 0.3)';
-    setTimeout(() => {
-      titleInput.style.borderColor = '';
-      titleInput.style.boxShadow = '';
-    }, 2000);
-    return;
-  }
-
-  const selectedDays = Array.from(document.querySelectorAll('#days-selector button.active')).map(b => parseInt(b.dataset.day));
-
-  const routine = {
-    id: 'rt-' + Date.now(),
-    title,
-    time: timeInput.value,
-    days: selectedDays,
-    alarmEnabled: state.alarmEnabled,
-    alarmSound: $('alarm-sound').value,
-    completed: false,
-    createdAt: Date.now()
-  };
-
-  state.routines.push(routine);
-  updateSkill('organization', 2);
-  saveState();
-  renderRoutines();
-
-  // LIMPAR CAMPOS após adicionar
-  titleInput.value = '';
-  timeInput.value = '08:00';
-
-  // Resetar dias para padrão (Seg-Sex)
-  document.querySelectorAll('#days-selector button').forEach((btn, i) => {
-    if (i >= 1 && i <= 5) {
-      btn.classList.add('active');
-      btn.style.background = 'linear-gradient(135deg, var(--neon-cyan), var(--neon-purple))';
-      btn.style.color = 'var(--bg)';
-      btn.style.borderColor = 'transparent';
-      btn.style.boxShadow = '0 0 15px rgba(0,240,255,0.3)';
-    } else {
-      btn.classList.remove('active');
-      btn.style.background = 'var(--surface-solid)';
-      btn.style.color = 'var(--text2)';
-      btn.style.borderColor = 'var(--border)';
-      btn.style.boxShadow = 'none';
-    }
-  });
-
-  // Resetar alarme para ativo
-  state.alarmEnabled = true;
-  const alarmBtn = $('alarm-toggle');
-  const alarmIcon = $('alarm-icon');
-  alarmBtn.style.background = 'var(--surface-solid)';
-  alarmBtn.style.color = 'var(--text2)';
-  alarmBtn.style.boxShadow = 'none';
-  alarmIcon.textContent = '🔔';
-}
-
-function toggleRoutine(id) {
-  const r = state.routines.find(x => x.id === id);
-  if (r) {
-    r.completed = !r.completed;
-    if (r.completed) { updateSkill('organization', 3); updateSkill('consistency', 1); }
-    saveState();
-    renderRoutines();
-  }
-}
-
-function deleteRoutine(id) {
-  state.routines = state.routines.filter(r => r.id !== id);
-  saveState();
-  renderRoutines();
-}
-
-function renderRoutines() {
-  const list = $('routines-list');
-  list.innerHTML = state.routines.map(r => `
-    <div class="card ${r.completed ? 'completed' : ''} fade-in">
-      <div class="card-info">
-        <div class="check-btn ${r.completed ? 'checked' : ''}" onclick="toggleRoutine('${r.id}')">${r.completed ? '✓' : ''}</div>
-        <div>
-          <h4>${r.title}</h4>
-          <div class="card-meta">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>${r.time}</span>
-            <span class="badge">${r.days.map(d => DAYS[d]).join(', ')}</span>
-            ${r.alarmEnabled ? '<span style="color:var(--neon-yellow);text-shadow:0 0 8px rgba(255,240,31,0.5);">🔔</span>' : ''}
-          </div>
-        </div>
-      </div>
-      <button class="btn-icon" onclick="deleteRoutine('${r.id}')">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </button>
-    </div>
-  `).join('');
-}
-
-// ===== FINANÇAS =====
-function setFinanceType(type) {
-  state.financeType = type;
-  document.querySelectorAll('.type-toggle button').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-}
-
-function addFinance() {
-  const amount = parseFloat($('finance-amount').value);
-  const desc = $('finance-desc').value.trim();
-  if (!amount || !desc) return;
-  const entry = {
-    id: 'fn-' + Date.now(),
-    type: state.financeType,
-    amount,
-    category: autoCategorize(desc),
-    description: desc,
-    date: $('finance-date').value || new Date().toISOString().split('T')[0],
-    createdAt: Date.now()
-  };
-  state.finances.push(entry);
-  updateSkill('discipline', 2);
-  saveState();
-  renderFinances();
-  $('finance-amount').value = '';
-  $('finance-desc').value = '';
-}
-
-function deleteFinance(id) {
-  state.finances = state.finances.filter(f => f.id !== id);
-  saveState();
-  renderFinances();
-}
-
-function renderFinances() {
-  const income = state.finances.filter(f => f.type === 'income').reduce((s, f) => s + f.amount, 0);
-  const expense = state.finances.filter(f => f.type === 'expense').reduce((s, f) => s + f.amount, 0);
-  const balance = income - expense;
-
-  $('finance-stats').innerHTML = `
-    <div class="stat-card income">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon-green)" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-      <div><span class="stat-label">Entradas</span><span class="stat-value" style="color:var(--neon-green);text-shadow:0 0 10px rgba(57,255,20,0.3);">${formatCurrency(income)}</span></div>
-    </div>
-    <div class="stat-card expense">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--neon-red)" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>
-      <div><span class="stat-label">Saídas</span><span class="stat-value" style="color:var(--neon-red);text-shadow:0 0 10px rgba(255,42,109,0.3);">${formatCurrency(expense)}</span></div>
-    </div>
-    <div class="stat-card balance ${balance >= 0 ? 'positive' : 'negative'}">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${balance >= 0 ? 'var(--neon-green)' : 'var(--neon-red)'}" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-      <div><span class="stat-label">Saldo</span><span class="stat-value" style="color:${balance >= 0 ? 'var(--neon-green)' : 'var(--neon-red)'};text-shadow:0 0 10px ${balance >= 0 ? 'rgba(57,255,20,0.3)' : 'rgba(255,42,109,0.3)'}">${formatCurrency(balance)}</span></div>
-    </div>
-  `;
-
-  $('finance-list').innerHTML = state.finances.slice().reverse().map(f => `
-    <div class="entry-card ${f.type} fade-in">
-      <div>
-        <div style="font-weight:600;color:var(--text);">${f.description}</div>
-        <div style="font-size:0.8125rem;color:var(--text3);font-family:var(--font-mono);">${f.category} · ${f.date}</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:0.875rem;">
-        <span class="entry-amount ${f.type}">${f.type === 'income' ? '+' : '-'}${formatCurrency(f.amount)}</span>
-        <button class="btn-icon" onclick="deleteFinance('${f.id}')">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-        </button>
-      </div>
-    </div>
-  `).join('');
-}
-
-// ===== POMODORO =====
-function setPomodoro(minutes) {
-  state.pomodoroDuration = minutes * 60;
-  state.pomodoroTime = minutes * 60;
-  state.pomodoroRunning = false;
-  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
-  updateTimerDisplay();
-  document.querySelectorAll('.preset').forEach(p => p.classList.remove('active'));
-  event.target.closest('.preset').classList.add('active');
-}
-
-function toggleTimer() {
-  if (state.pomodoroRunning) { pauseTimer(); } else { startTimer(); }
-}
-
-function startTimer() {
-  state.pomodoroRunning = true;
-  const startTime = Date.now();
-  const duration = state.pomodoroTime * 1000;
-
-  state.timerWorker = setInterval(() => {
-    const elapsed = (Date.now() - startTime) / 1000;
-    state.pomodoroTime = Math.max(0, Math.ceil((duration - elapsed * 1000) / 1000));
-    updateTimerDisplay();
-
-    if (state.pomodoroTime <= 0) {
-      clearInterval(state.timerWorker);
-      state.timerWorker = null;
-      state.pomodoroRunning = false;
-      state.pomodoro.cycles++;
-      state.pomodoro.sessions.push({ id: 'pm-' + Date.now(), duration: state.pomodoroDuration, completed: true, startedAt: startTime });
-      updateSkill('focus', 5);
-      updateSkill('consistency', 2);
-      saveState();
-      updateTimerDisplay();
-      playAlarm();
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('Pomodoro Concluído!', { body: 'Hora de uma pausa!' });
-      }
-    }
-  }, 100);
-
-  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
-}
-
-function pauseTimer() {
-  state.pomodoroRunning = false;
-  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
-  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-}
-
-function resetTimer() {
-  state.pomodoroRunning = false;
-  if (state.timerWorker) { clearInterval(state.timerWorker); state.timerWorker = null; }
-  state.pomodoroTime = state.pomodoroDuration;
-  updateTimerDisplay();
-  $('timer-play').innerHTML = '<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
-}
-
-function updateTimerDisplay() {
-  $('timer-display').textContent = formatTime(state.pomodoroTime);
-  const progress = ((state.pomodoroDuration - state.pomodoroTime) / state.pomodoroDuration) * 283;
-  $('timer-progress').setAttribute('stroke-dashoffset', progress);
-  $('pomodoro-cycles').textContent = state.pomodoro.cycles;
-  $('pomodoro-sessions').textContent = state.pomodoro.sessions.length;
-}
-
-// ===== CHECKLIST =====
-function addTask() {
-  const title = $('task-input').value.trim();
-  if (!title) return;
-  state.checklist.push({
-    id: 'tk-' + Date.now(),
-    title,
-    completed: false,
-    column: 'todo',
-    createdAt: Date.now()
-  });
-  updateSkill('execution', 2);
-  saveState();
-  renderChecklist();
-  $('task-input').value = '';
-}
-
-function toggleTask(id) {
-  const t = state.checklist.find(x => x.id === id);
-  if (t) {
-    t.completed = !t.completed;
-    if (t.completed) { updateSkill('execution', 3); updateSkill('consistency', 1); }
-    saveState();
-    renderChecklist();
-  }
-}
-
-function moveTask(id, column) {
-  const t = state.checklist.find(x => x.id === id);
-  if (t) { t.column = column; saveState(); renderChecklist(); }
-}
-
-function deleteTask(id) {
-  state.checklist = state.checklist.filter(t => t.id !== id);
-  saveState();
-  renderChecklist();
-}
-
-function renderChecklist() {
-  const columns = [
-    { id: 'todo', label: 'A Fazer', color: '#ff2a6d' },
-    { id: 'doing', label: 'Fazendo', color: '#ff9e00' },
-    { id: 'done', label: 'Concluído', color: '#39ff14' }
-  ];
-
-  $('kanban-board').innerHTML = columns.map(col => {
-    const items = state.checklist.filter(t => t.column === col.id);
-    return `
-      <div class="column">
-        <div class="col-header" style="border-color:${col.color}">
-          <span class="col-dot" style="background:${col.color};color:${col.color}"></span>
-          <h4 style="color:${col.color}">${col.label}</h4>
-          <span class="col-count">${items.length}</span>
-        </div>
-        ${items.map(t => `
-          <div class="task-card ${t.completed ? 'completed' : ''}" draggable="true" ondragstart="dragTask(event,'${t.id}')">
-            <div style="display:flex;align-items:center;gap:0.625rem;">
-              <div class="check-btn ${t.completed ? 'checked' : ''}" onclick="toggleTask('${t.id}')">${t.completed ? '✓' : ''}</div>
-              <span class="task-title" style="flex:1;font-size:0.9375rem;font-weight:600;">${t.title}</span>
-              <button class="btn-icon" onclick="deleteTask('${t.id}')">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              </button>
+    <!-- HOME SCREEN -->
+    <div class="screen active custom-scroll" id="screen-home">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-6">
+                <div class="text-5xl mb-3">♔</div>
+                <h2 class="font-cinzel text-2xl font-bold mb-2">Bem-vindo, <span id="homeUserName">Soberano</span></h2>
+                <p class="text-[var(--text-secondary)] text-sm leading-relaxed">O ecossistema de auto-soberania está ativo. Seus dados permanecem sob seu domínio absoluto.</p>
+                <div class="mt-4 flex justify-center gap-2">
+                    <div class="px-3 py-1 rounded-full bg-[var(--accent)]/20 border border-[var(--accent)]/30 text-xs font-medium">Local-First</div>
+                    <div class="px-3 py-1 rounded-full bg-[var(--accent)]/20 border border-[var(--accent)]/30 text-xs font-medium">Offline</div>
+                </div>
             </div>
-            ${col.id !== 'done' ? `
-              <div style="margin-top:0.625rem;display:flex;gap:0.375rem;">
-                ${col.id === 'todo' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-cyan);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(0,240,255,0.2)'" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','doing')">→ Fazendo</button>` : ''}
-                ${col.id === 'doing' ? `<button style="font-size:0.75rem;padding:0.375rem 0.625rem;background:var(--surface-solid);border:1px solid var(--border);border-radius:var(--radius);color:var(--neon-green);font-family:var(--font-display);font-weight:600;transition:all 0.3s;" onmouseover="this.style.boxShadow='0 0 10px rgba(57,255,20,0.2)'" onmouseout="this.style.boxShadow='none'" onclick="moveTask('${t.id}','done')">✓ Concluir</button>` : ''}
-              </div>
-            ` : ''}
-          </div>
-        `).join('')}
-        <div style="min-height:60px;border:2px dashed var(--border2);border-radius:var(--radius);margin-top:0.625rem;transition:all 0.3s;" ondrop="dropTask(event,'${col.id}')" ondragover="allowDrop(event)" ondragenter="this.style.borderColor='var(--neon-cyan)';this.style.boxShadow='0 0 15px rgba(0,240,255,0.1)'" ondragleave="this.style.borderColor='var(--border2)';this.style.boxShadow='none'"></div>
-      </div>
-    `;
-  }).join('');
-}
-
-let draggedTask = null;
-function dragTask(e, id) { draggedTask = id; }
-function allowDrop(e) { e.preventDefault(); }
-function dropTask(e, column) {
-  e.preventDefault();
-  if (draggedTask) moveTask(draggedTask, column);
-  draggedTask = null;
-}
-
-// ===== BIBLIOTECA =====
-function handleFileUpload(e) {
-  const files = Array.from(e.target.files);
-  files.forEach(file => {
-    const reader = new FileReader();
-    reader.onload = function(evt) {
-      state.files.push({
-        id: 'fl-' + Date.now(),
-        name: file.name,
-        data: evt.target.result,
-        size: file.size,
-        type: file.type,
-        uploadedAt: Date.now()
-      });
-      saveLocal();
-      renderFiles();
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-function renderFiles() {
-  $('files-grid').innerHTML = state.files.map(f => `
-    <div class="card" style="flex-direction:column;align-items:center;text-align:center;cursor:pointer;gap:0.75rem;" onclick="viewFile('${f.id}')">
-      <div style="font-size:2.5rem;filter:drop-shadow(0 0 8px rgba(0,240,255,0.3));">${f.name.endsWith('.pdf') ? '📄' : f.type.startsWith('image') ? '🖼️' : '📁'}</div>
-      <span style="font-size:0.875rem;font-weight:600;word-break:break-all;color:var(--text);">${f.name}</span>
-      <span style="font-size:0.75rem;color:var(--text3);font-family:var(--font-mono);">${(f.size / 1024).toFixed(1)} KB</span>
-      <button class="btn-icon" style="margin-top:0.25rem;" onclick="event.stopPropagation();deleteFile('${f.id}')">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="navigateTo('performance')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">👑</span><span class="font-medium text-sm">Meu Desempenho</span></button>
+                <button onclick="navigateTo('erudition')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">📚</span><span class="font-medium text-sm">Erudição</span></button>
+                <button onclick="navigateTo('checklist')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">🍷</span><span class="font-medium text-sm">Checklist</span></button>
+                <button onclick="navigateTo('tasks')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">🕯️</span><span class="font-medium text-sm">Tarefas</span></button>
+                <button onclick="navigateTo('notes')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">📒</span><span class="font-medium text-sm">Anotações</span></button>
+                <button onclick="navigateTo('finance')" class="glass-card glass-button rounded-2xl p-5 flex flex-col items-center gap-3 haptic"><span class="text-3xl">💵</span><span class="font-medium text-sm">Financeiro</span></button>
+            </div>
+            <div class="glass-card rounded-2xl p-5 mt-4">
+                <h3 class="font-cinzel text-sm font-semibold mb-4 tracking-wider">RESUMO DO DIA</h3>
+                <div class="grid grid-cols-3 gap-4 text-center">
+                    <div><div class="text-2xl font-bold text-[var(--accent-light)]" id="homeProd">84%</div><div class="text-xs text-[var(--text-secondary)] mt-1">Produtividade</div></div>
+                    <div><div class="text-2xl font-bold text-[var(--accent-light)]" id="homeRituals">3/5</div><div class="text-xs text-[var(--text-secondary)] mt-1">Rituais</div></div>
+                    <div><div class="text-2xl font-bold text-[var(--accent-light)]" id="homeBalance">R$ 0</div><div class="text-xs text-[var(--text-secondary)] mt-1">Balanço</div></div>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-5">
+                <h3 class="font-cinzel text-sm font-semibold mb-3 tracking-wider">📖 LEITOR DE PDF</h3>
+                <p class="text-xs text-[var(--text-secondary)] mb-3">Importe seus grimórios digitais diretamente do dispositivo.</p>
+                <label class="w-full glass-card glass-button rounded-xl p-4 flex items-center justify-center gap-2 text-[var(--accent-light)] cursor-pointer">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Selecionar PDF
+                    <input type="file" accept=".pdf" class="hidden" onchange="handlePDFUpload(this)">
+                </label>
+                <div id="pdfList" class="mt-3 space-y-2"></div>
+            </div>
+        </div>
     </div>
-  `).join('');
-}
 
-function viewFile(id) {
-  const f = state.files.find(x => x.id === id);
-  if (!f) return;
-  if (f.type.startsWith('image')) {
-    const win = window.open('', '_blank');
-    win.document.write(`<body style="margin:0;background:#0a0a0f;display:flex;align-items:center;justify-content:center;height:100vh;"><img src="${f.data}" style="max-width:95%;max-height:95%;box-shadow:0 0 50px rgba(0,240,255,0.2);"></body>`);
-  } else if (f.name.endsWith('.pdf')) {
-    const win = window.open('', '_blank');
-    win.document.write(`<body style="margin:0;background:#0a0a0f;"><embed src="${f.data}" width="100%" height="100%" type="application/pdf" style="filter:invert(1);"></body>`);
-  }
-}
-
-function deleteFile(id) {
-  state.files = state.files.filter(f => f.id !== id);
-  saveLocal();
-  renderFiles();
-}
-
-// ===== CHAT =====
-function sendMessage() {
-  const input = $('chat-input');
-  const text = input.value.trim();
-  if (!text) return;
-
-  if (state.connectionMode === 'firebase' && state.firebaseReady) {
-    sendMessageToFirebase(text);
-    input.value = '';
-    return;
-  }
-
-  const msg = {
-    id: 'msg-' + Date.now(),
-    senderId: state.user.id,
-    senderName: state.user.name,
-    senderEmoji: state.user.emoji,
-    content: text,
-    timestamp: Date.now()
-  };
-  state.chat.push(msg);
-  saveState();
-  renderChat();
-  input.value = '';
-}
-
-function renderChat() {
-  $('chat-messages').innerHTML = state.chat.map(m => `
-    <div class="message ${m.senderId === state.user.id ? 'own' : 'other'} fade-in">
-      <div class="msg-avatar">${m.senderEmoji}</div>
-      <div class="msg-content">
-        <span class="msg-sender">${m.senderName}</span>
-        <p style="font-size:0.9375rem;line-height:1.5;">${m.content}</p>
-        <span class="msg-time">${new Date(m.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-      </div>
+    <!-- PERFORMANCE SCREEN -->
+    <div class="screen custom-scroll" id="screen-performance">
+        <div class="px-5 py-4 space-y-6">
+            <div class="glass-card rounded-2xl p-6 text-center">
+                <div class="w-24 h-24 rounded-full mx-auto mb-3 border-2 border-[var(--accent)] overflow-hidden bg-gradient-to-br from-[var(--accent)] to-[var(--deep-wine)] flex items-center justify-center" id="perfProfilePic">
+                    <span class="text-4xl">👤</span>
+                </div>
+                <h2 class="font-cinzel text-xl font-bold" id="perfUserName">Perfil do Monarca</h2>
+                <p class="text-sm text-[var(--text-secondary)] mt-1">Nível de Soberania: <span class="text-[var(--accent-light)] font-semibold">Cavaleiro</span></p>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-6 tracking-wider text-center">GRÁFICO DE SOBERANIA</h3>
+                <div class="flex justify-center">
+                    <div class="radar-container">
+                        <svg viewBox="0 0 280 280" class="w-full h-full">
+                            <g id="radarGrid"></g>
+                            <polygon id="radarData" class="radar-data" points=""></polygon>
+                            <g id="radarPoints"></g>
+                            <g id="radarLabels"></g>
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 text-center"><p class="text-xs text-[var(--text-secondary)]">Toque nos vértices para detalhes</p></div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-6 tracking-wider">RASTREADOR PSICOSOMÁTICO</h3>
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-sm">Serenidade / Alegria</span><span class="text-sm font-mono text-[var(--accent-light)]" id="serenityValue">3/5</span></div>
+                        <input type="range" min="1" max="5" value="3" class="w-full" id="sliderSerenity" oninput="updateTracker('serenity', this.value)">
+                        <div class="flex justify-between mt-1 text-xs text-[var(--text-secondary)]"><span>Agitado</span><span>Sereno</span></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-sm">Intensidade Emocional</span><span class="text-sm font-mono text-[var(--accent-light)]" id="intensityValue">40%</span></div>
+                        <input type="range" min="0" max="100" value="40" class="w-full" id="sliderIntensity" oninput="updateTracker('intensity', this.value)">
+                        <div class="flex justify-between mt-1 text-xs text-[var(--text-secondary)]"><span>Plácido</span><span>Volátil</span></div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-2"><span class="text-sm">Fator Produtividade</span><span class="text-sm font-mono text-[var(--accent-light)]" id="productivityValue">75%</span></div>
+                        <input type="range" min="0" max="100" value="75" class="w-full" id="sliderProductivity" oninput="updateTracker('productivity', this.value)">
+                    </div>
+                </div>
+                <div class="mt-6 pt-6 border-t border-[var(--glass-border)]">
+                    <label class="text-sm block mb-2">Nota do Dia (Diário de Bordo)</label>
+                    <textarea id="dailyNote" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-xl p-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 resize-none focus:outline-none focus:border-[var(--accent)] transition-colors" rows="3" placeholder="Registre eventos cruciais, insights estratégicos ou observações de campo..."></textarea>
+                    <div class="mt-2 flex justify-between items-center"><span class="text-xs text-[var(--text-secondary)]">Visível por 48h</span><button onclick="saveDailyNote()" class="px-4 py-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/40 text-xs font-medium active:scale-95 transition-transform">Registrar</button></div>
+                </div>
+                <div class="mt-4 space-y-2" id="notesHistory"></div>
+            </div>
+        </div>
     </div>
-  `).join('');
-  $('chat-messages').scrollTop = $('chat-messages').scrollHeight;
-}
 
-// ===== COMUNIDADE =====
-function generateProfiles() {
-  if (state.profiles.length === 0) {
-    for (let i = 0; i < 12; i++) {
-      const { name, emoji } = generateUser();
-      state.profiles.push({ id: 'prof-' + i, name, emoji, isOnline: Math.random() > 0.5, isHidden: false });
-    }
-  }
-}
-
-function filterProfiles(query) {
-  renderProfiles(query);
-}
-
-function renderProfiles(query = '') {
-  generateProfiles();
-  const filtered = state.profiles.filter(p =>
-    !p.isHidden && p.id !== state.user.id &&
-    (p.name.toLowerCase().includes(query.toLowerCase()) || p.emoji.includes(query))
-  );
-
-  $('profiles-grid').innerHTML = filtered.map(p => `
-    <div class="profile-card fade-in">
-      <div class="prof-avatar">
-        <span style="font-size:2.25rem;">${p.emoji}</span>
-        <span class="prof-status ${p.isOnline ? 'online' : 'offline'}"></span>
-      </div>
-      <h4>${p.name}</h4>
-      <span style="font-size:0.8125rem;color:var(--text3);font-family:var(--font-mono);">${p.isOnline ? '● Online' : '○ Offline'}</span>
-      <div class="prof-actions">
-        <button>👤 Amizade</button>
-        <button onclick="hideProfile('${p.id}')">🙈 Ocultar</button>
-      </div>
+    <!-- ERUDITION SCREEN -->
+    <div class="screen custom-scroll" id="screen-erudition">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">📚</span><h2 class="font-cinzel text-xl font-bold mt-2">Grimório de Erudição</h2><p class="text-sm text-[var(--text-secondary)] mt-1">Conhecimento hermético para soberania estratégica</p></div>
+            <div class="oracle-card rounded-2xl p-6 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-4">
+                        <span class="text-2xl">🔮</span>
+                        <div><h3 class="font-cinzel font-semibold">Oráculo Diário</h3><p class="text-xs text-[var(--text-secondary)]">Ciclo de 48 Leis • Dia <span id="oracleDay">1</span>/48</p></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="glass-card rounded-xl p-4 border-l-2 border-[var(--accent)]">
+                            <div class="text-xs text-[var(--accent-light)] font-semibold mb-1">LEI DO PODER</div>
+                            <p class="text-sm leading-relaxed" id="oracleLaw">Carregando...</p>
+                        </div>
+                        <div class="glass-card rounded-xl p-4 border-l-2 border-[var(--accent)]/70">
+                            <div class="text-xs text-[var(--accent-light)] font-semibold mb-1">MÁXIMA DE GUERRA</div>
+                            <p class="text-sm leading-relaxed" id="oracleWar">Carregando...</p>
+                        </div>
+                        <div class="glass-card rounded-xl p-4 border-l-2 border-[var(--accent)]/50">
+                            <div class="text-xs text-[var(--accent-light)] font-semibold mb-1">PRINCÍPIO DE INFLUÊNCIA</div>
+                            <p class="text-sm leading-relaxed" id="oracleSeduction">Carregando...</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-[var(--glass-border)]">
+                        <div class="text-xs text-[var(--accent-light)] font-semibold mb-2">APLICAÇÃO PRÁTICA ANALÍTICA</div>
+                        <p class="text-sm text-[var(--text-secondary)] leading-relaxed" id="oracleApp">Carregando...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button onclick="showEruditionModule('social')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">🤝</span><div class="font-medium text-sm">Social</div><div class="text-xs text-[var(--text-secondary)]">Dinâmicas de grupo</div></button>
+                <button onclick="showEruditionModule('etiqueta')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">🎩</span><div class="font-medium text-sm">Etiqueta</div><div class="text-xs text-[var(--text-secondary)]">Refinamento</div></button>
+                <button onclick="showEruditionModule('vocabulario')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">📝</span><div class="font-medium text-sm">Vocabulário</div><div class="text-xs text-[var(--text-secondary)]">Léxico erudito</div></button>
+                <button onclick="showEruditionModule('escrita')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">✍️</span><div class="font-medium text-sm">Escrita</div><div class="text-xs text-[var(--text-secondary)]">Expressão precisa</div></button>
+                <button onclick="showEruditionModule('fala')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">🗣️</span><div class="font-medium text-sm">Fala</div><div class="text-xs text-[var(--text-secondary)]">Oratória</div></button>
+                <button onclick="showEruditionModule('postura')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">🧘</span><div class="font-medium text-sm">Postura</div><div class="text-xs text-[var(--text-secondary)]">Linguagem corporal</div></button>
+                <button onclick="showEruditionModule('habitos')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">⏰</span><div class="font-medium text-sm">Hábitos</div><div class="text-xs text-[var(--text-secondary)]">Engenharia comportamental</div></button>
+                <button onclick="showEruditionModule('rotina')" class="glass-card glass-button rounded-xl p-4 text-left"><span class="text-2xl mb-2 block">📅</span><div class="font-medium text-sm">Rotina</div><div class="text-xs text-[var(--text-secondary)]">Otimização biológica</div></button>
+            </div>
+        </div>
     </div>
-  `).join('');
-}
 
-function hideProfile(id) {
-  const p = state.profiles.find(x => x.id === id);
-  if (p) { p.isHidden = true; renderProfiles(); }
-}
-
-// ===== PRESENÇA =====
-function renderPresence() {
-  if (state.presence.length === 0) {
-    for (let i = 0; i < 5; i++) {
-      const { name, emoji } = generateUser();
-      state.presence.push({ id: 'pres-' + i, name, emoji, isOnline: Math.random() > 0.3 });
-    }
-  }
-
-  $('presence-list').innerHTML = state.presence.map(p => `
-    <div class="pres-user">
-      <div class="pres-avatar">
-        <span>${p.emoji}</span>
-        ${p.isOnline ? '<span class="pres-ping"></span>' : ''}
-      </div>
-      <div>
-        <span class="pres-name">${p.name}</span>
-        <span class="pres-status">${p.isOnline ? '● online' : '○ offline'}</span>
-      </div>
+    <!-- ERUDITION MODULE SCREEN -->
+    <div class="screen custom-scroll" id="screen-erudition-module">
+        <div class="px-5 py-4 space-y-4">
+            <button onclick="navigateTo('erudition')" class="glass-card glass-button rounded-xl p-3 flex items-center gap-2 text-sm mb-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                Voltar ao Grimório
+            </button>
+            <div class="glass-card rounded-2xl p-6">
+                <h2 class="font-cinzel text-xl font-bold mb-2" id="moduleTitle">Módulo</h2>
+                <p class="text-sm text-[var(--text-secondary)] mb-4" id="moduleSubtitle">Descrição</p>
+                <div class="space-y-4 text-sm leading-relaxed text-[var(--text-primary)]" id="moduleContent"></div>
+            </div>
+        </div>
     </div>
-  `).join('');
-}
 
-// ===== GAMIFICAÇÃO / RADAR =====
-function updateSkill(skill, delta) {
-  state.skills[skill] = Math.min(100, Math.max(0, state.skills[skill] + delta));
-  saveState();
-  drawMiniRadar();
-}
-
-function drawMiniRadar() {
-  const canvas = $('mini-radar');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2, r = 35;
-  const skills = ['execution', 'focus', 'discipline', 'organization', 'consistency'];
-  const values = skills.map(s => state.skills[s]);
-
-  ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.15)';
-  ctx.lineWidth = 1;
-  for (let i = 1; i <= 4; i++) {
-    ctx.beginPath();
-    for (let j = 0; j < 5; j++) {
-      const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
-      const x = cx + Math.cos(angle) * (r * i / 4);
-      const y = cy + Math.sin(angle) * (r * i / 4);
-      if (j === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-  }
-  ctx.fillStyle = 'rgba(0, 240, 255, 0.2)';
-  ctx.strokeStyle = '#00f0ff';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  values.forEach((v, i) => {
-    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-    const x = cx + Math.cos(angle) * (r * v / 100);
-    const y = cy + Math.sin(angle) * (r * v / 100);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = '#00f0ff';
-  ctx.shadowColor = '#00f0ff';
-  ctx.shadowBlur = 8;
-  values.forEach((v, i) => {
-    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-    const x = cx + Math.cos(angle) * (r * v / 100);
-    const y = cy + Math.sin(angle) * (r * v / 100);
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.shadowBlur = 0;
-}
-
-function drawRadar() {
-  const canvas = $('radar-chart');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const w = canvas.width, h = canvas.height;
-  const cx = w / 2, cy = h / 2, r = 160;
-  const labels = ['Execução', 'Foco', 'Disciplina', 'Organização', 'Consistência'];
-  const skills = ['execution', 'focus', 'discipline', 'organization', 'consistency'];
-  const values = skills.map(s => state.skills[s]);
-
-  ctx.clearRect(0, 0, w, h);
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.12)';
-  ctx.lineWidth = 1;
-  for (let i = 1; i <= 5; i++) {
-    ctx.beginPath();
-    for (let j = 0; j < 5; j++) {
-      const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
-      const x = cx + Math.cos(angle) * (r * i / 5);
-      const y = cy + Math.sin(angle) * (r * i / 5);
-      if (j === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-    ctx.stroke();
-  }
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
-  for (let j = 0; j < 5; j++) {
-    const angle = (Math.PI * 2 / 5) * j - Math.PI / 2;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx + Math.cos(angle) * r, cy + Math.sin(angle) * r);
-    ctx.stroke();
-  }
-  ctx.fillStyle = '#94a3b8';
-  ctx.font = '600 13px "Rajdhani", sans-serif';
-  ctx.textAlign = 'center';
-  labels.forEach((label, i) => {
-    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-    const x = cx + Math.cos(angle) * (r + 30);
-    const y = cy + Math.sin(angle) * (r + 30);
-    ctx.fillText(label, x, y + 4);
-  });
-  const gradient = ctx.createLinearGradient(0, 0, w, h);
-  gradient.addColorStop(0, 'rgba(0, 240, 255, 0.25)');
-  gradient.addColorStop(1, 'rgba(176, 38, 255, 0.25)');
-  ctx.fillStyle = gradient;
-  ctx.strokeStyle = '#00f0ff';
-  ctx.lineWidth = 3;
-  ctx.shadowColor = '#00f0ff';
-  ctx.shadowBlur = 15;
-  ctx.beginPath();
-  values.forEach((v, i) => {
-    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-    const x = cx + Math.cos(angle) * (r * v / 100);
-    const y = cy + Math.sin(angle) * (r * v / 100);
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.shadowBlur = 0;
-  ctx.fillStyle = '#00f0ff';
-  ctx.shadowColor = '#00f0ff';
-  ctx.shadowBlur = 12;
-  values.forEach((v, i) => {
-    const angle = (Math.PI * 2 / 5) * i - Math.PI / 2;
-    const x = cx + Math.cos(angle) * (r * v / 100);
-    const y = cy + Math.sin(angle) * (r * v / 100);
-    ctx.beginPath();
-    ctx.arc(x, y, 5, 0, Math.PI * 2);
-    ctx.fill();
-  });
-  ctx.shadowBlur = 0;
-  $('skill-legend').innerHTML = labels.map((l, i) => `
-    <div class="skill-item">
-      <span class="skill-dot"></span>
-      <span>${l}: <strong style="color:var(--neon-cyan);">${values[i]}</strong></span>
+    <!-- CHECKLIST SCREEN -->
+    <div class="screen custom-scroll" id="screen-checklist">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">🍷</span><h2 class="font-cinzel text-xl font-bold mt-2">Rituais Diários</h2><p class="text-sm text-[var(--text-secondary)]">Checklist de soberania inalterável</p></div>
+            <div class="space-y-3" id="checklistContainer"></div>
+            <div class="glass-card rounded-xl p-4 mt-4">
+                <div class="text-xs text-[var(--text-secondary)] text-center">Último reset: <span id="lastResetDate">--</span></div>
+            </div>
+        </div>
     </div>
-  `).join('');
-}
 
-// ===== ALARME =====
-let audioCtx = null;
-function playAlarm() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.5);
-    gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
-    osc.start(audioCtx.currentTime);
-    osc.stop(audioCtx.currentTime + 0.5);
-  } catch (e) { console.error('Alarme:', e); }
-}
+    <!-- TASKS SCREEN -->
+    <div class="screen custom-scroll" id="screen-tasks">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">🕯️</span><h2 class="font-cinzel text-xl font-bold mt-2">Tarefas Pendentes</h2><p class="text-sm text-[var(--text-secondary)]">Kanban de prioridades estratégicas</p></div>
+            <div class="flex gap-2 mb-4">
+                <button onclick="filterTasks('all')" class="flex-1 glass-card rounded-lg py-2 text-xs font-medium border-[var(--accent)] bg-[var(--accent)]/20" id="filter-all">Todas</button>
+                <button onclick="filterTasks('high')" class="flex-1 glass-card rounded-lg py-2 text-xs font-medium opacity-60" id="filter-high">Alta</button>
+                <button onclick="filterTasks('medium')" class="flex-1 glass-card rounded-lg py-2 text-xs font-medium opacity-60" id="filter-medium">Média</button>
+                <button onclick="filterTasks('low')" class="flex-1 glass-card rounded-lg py-2 text-xs font-medium opacity-60" id="filter-low">Baixa</button>
+            </div>
+            <div class="space-y-3" id="tasksContainer"></div>
+            <button onclick="openTaskModal()" class="w-full glass-card glass-button rounded-xl p-4 mt-4 flex items-center justify-center gap-2 text-[var(--accent-light)]">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Nova Tarefa Estratégica
+            </button>
+        </div>
+    </div>
 
-// ===== ALARME DE ROTINA =====
-setInterval(() => {
-  const now = new Date();
-  const time = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-  const day = now.getDay();
-  state.routines.forEach(r => {
-    if (r.alarmEnabled && r.time === time && r.days.includes(day) && !r.completed) {
-      playAlarm();
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification('⏰ Rotina!', { body: r.title });
-      }
-    }
-  });
-}, 60000);
+    <!-- NOTES SCREEN -->
+    <div class="screen custom-scroll" id="screen-notes">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">📒</span><h2 class="font-cinzel text-xl font-bold mt-2">Anotações</h2><p class="text-sm text-[var(--text-secondary)]">Bloco de notas com markdown básico</p></div>
+            <div class="glass-card rounded-xl p-4">
+                <input type="text" id="noteTitle" placeholder="Título da nota..." class="w-full bg-transparent border-none text-lg font-medium placeholder-[var(--text-secondary)]/50 focus:outline-none mb-3">
+                <textarea id="noteContent" class="w-full bg-transparent border-none text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 resize-none focus:outline-none" rows="8" placeholder="# Insight do dia
 
-// ===== PRESENÇA HEARTBEAT (local fallback) =====
-setInterval(() => {
-  if (state.connectionMode !== 'firebase') {
-    state.presence.forEach(p => { p.isOnline = Math.random() > 0.1; });
-    renderPresence();
-  }
-}, 5000);
+- Análise de campo sobre reunião com investidores
+- Padrão identificado: hesitação antes de compromissos financeiros
+- Próximo movimento: criar escassez artificial de tempo
 
-// ===== CONEXÃO =====
-function setConnectionMode(mode) {
-  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('active'));
-  event.target.closest('.mode-card').classList.add('active');
+> 'A pressa do outro é a sua paciência.'"></textarea>
+                <div class="flex justify-between items-center mt-4 pt-4 border-t border-[var(--glass-border)]">
+                    <span class="text-xs text-[var(--text-secondary)]">Markdown suportado</span>
+                    <button onclick="saveNote()" class="px-4 py-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/40 text-xs font-medium active:scale-95 transition-transform">Salvar Nota</button>
+                </div>
+            </div>
+            <div class="space-y-3" id="notesList"></div>
+        </div>
+    </div>
 
-  state.connectionMode = mode;
-  saveLocal();
+    <!-- FINANCE SCREEN -->
+    <div class="screen custom-scroll" id="screen-finance">
+        <div class="px-5 py-4 space-y-4">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">💵</span><h2 class="font-cinzel text-xl font-bold mt-2">Tesouraria de <span id="financeUserName">Soberano</span></h2><p class="text-sm text-[var(--text-secondary)]">Controle absoluto do capital</p></div>
+            <div class="glass-card rounded-2xl p-6">
+                <div class="text-center mb-6">
+                    <div class="text-xs text-[var(--text-secondary)] mb-1">Balanço Líquido do Mês</div>
+                    <div class="text-4xl font-bold font-mono text-[var(--accent-light)]" id="financeBalance">R$ 0,00</div>
+                    <div class="text-xs text-green-400 mt-1" id="financeTrend">+0% vs mês anterior</div>
+                </div>
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="text-center p-3 rounded-xl bg-green-500/10 border border-green-500/20"><div class="text-xs text-green-300 mb-1">Entradas</div><div class="font-mono font-semibold" id="financeIncome">R$ 0,00</div></div>
+                    <div class="text-center p-3 rounded-xl bg-red-500/10 border border-red-500/20"><div class="text-xs text-red-300 mb-1">Saídas</div><div class="font-mono font-semibold" id="financeExpense">R$ 0,00</div></div>
+                </div>
+                <div class="space-y-3" id="transactionsList"></div>
+                <button onclick="openTransactionModal()" class="w-full glass-card glass-button rounded-xl p-4 mt-6 flex items-center justify-center gap-2 text-[var(--accent-light)]">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Novo Lançamento
+                </button>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4">META DE ECONOMIA</h3>
+                <div class="flex justify-between text-sm mb-2"><span>Progresso</span><span class="font-mono text-[var(--accent-light)]" id="savingsPercent">0%</span></div>
+                <div class="w-full h-2 bg-black/30 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-[var(--accent)] to-[var(--accent-light)] rounded-full" id="savingsBar" style="width: 0%"></div></div>
+                <div class="text-xs text-[var(--text-secondary)] mt-2" id="savingsText">Meta: R$ 50.000 • Atual: R$ 0</div>
+            </div>
+        </div>
+    </div>
 
-  const localInstr = $('local-instructions');
-  const firebaseInstr = $('firebase-instructions');
-  const firebaseConfigDisplay = $('firebase-config-display');
-  const currentModeText = $('current-mode-text');
+    <!-- SETTINGS SCREEN -->
+    <div class="screen custom-scroll" id="screen-settings">
+        <div class="px-5 py-4 space-y-6">
+            <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">⚙️</span><h2 class="font-cinzel text-xl font-bold mt-2">Engenharia Visual</h2><p class="text-sm text-[var(--text-secondary)]">Controle absoluto da estética</p></div>
 
-  if (mode === 'firebase') {
-    if (localInstr) localInstr.style.display = 'none';
-    if (firebaseInstr) firebaseInstr.style.display = 'inline';
-    if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'block';
-    if (currentModeText) currentModeText.textContent = 'Modo Firebase';
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4">PERFIL DO MONARCA</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="w-16 h-16 rounded-full border-2 border-[var(--accent)] overflow-hidden bg-gradient-to-br from-[var(--accent)] to-[var(--deep-wine)] flex items-center justify-center" id="settingsProfilePic">
+                        <span class="text-2xl">👤</span>
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs text-[var(--text-secondary)] block mb-1">Nome de Soberano</label>
+                        <input type="text" id="profileNameInput" placeholder="Seu nome..." class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" onchange="updateProfileName(this.value)">
+                    </div>
+                </div>
+                <label class="w-full glass-card glass-button rounded-xl p-3 flex items-center justify-center gap-2 text-[var(--accent-light)] cursor-pointer text-sm">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    Alterar Foto de Perfil
+                    <input type="file" accept="image/*" class="hidden" onchange="handleProfileImage(this)">
+                </label>
+            </div>
 
-    if (!firebaseApp) {
-      const ok = initFirebase();
-      if (ok) {
-        signInAnon().then(() => {
-          syncToFirestore();
-          listenFromFirestore();
-          listenChatFromFirebase();
-          updateFirebasePresence();
-          listenGlobalPresence();
-        }).catch(err => {
-          console.error('Falha ao conectar Firebase:', err);
-          alert('Não foi possível conectar ao Firebase. Verifique sua conexão.');
-          setConnectionMode('local');
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4 tracking-wider">MATRIZ DE TEMAS</h3>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="setTheme('wine')" class="glass-card glass-button rounded-xl p-4 text-left border-2 border-[var(--accent)]" id="theme-wine"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#2D0A1F] to-[#8B1E3F] mb-2"></div><div class="font-medium text-sm">Deep Wine</div><div class="text-xs text-[var(--text-secondary)]">Padrão</div></button>
+                    <button onclick="setTheme('obsidian')" class="glass-card glass-button rounded-xl p-4 text-left" id="theme-obsidian"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#000] to-[#333] mb-2"></div><div class="font-medium text-sm">Obsidian Void</div><div class="text-xs text-[var(--text-secondary)]">AMOLED</div></button>
+                    <button onclick="setTheme('crimson')" class="glass-card glass-button rounded-xl p-4 text-left" id="theme-crimson"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#1a0505] to-[#9b1b30] mb-2"></div><div class="font-medium text-sm">Imperial Crimson</div><div class="text-xs text-[var(--text-secondary)]">Sangue</div></button>
+                    <button onclick="setTheme('gold')" class="glass-card glass-button rounded-xl p-4 text-left" id="theme-gold"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#1a1a1a] to-[#b8860b] mb-2"></div><div class="font-medium text-sm">Royal Gold</div><div class="text-xs text-[var(--text-secondary)]">Dourado</div></button>
+                    <button onclick="setTheme('baltic')" class="glass-card glass-button rounded-xl p-4 text-left" id="theme-baltic"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#0a1520] to-[#1e3a5f] mb-2"></div><div class="font-medium text-sm">Baltic Midnight</div><div class="text-xs text-[var(--text-secondary)]">Abismo</div></button>
+                    <button onclick="setTheme('spectrum')" class="glass-card glass-button rounded-xl p-4 text-left" id="theme-spectrum"><div class="w-full h-8 rounded-lg bg-gradient-to-r from-[#ff0080] via-[#ff8c00] to-[#40e0d0] mb-2"></div><div class="font-medium text-sm">Spectrum RGB</div><div class="text-xs text-[var(--text-secondary)]">Dinâmico</div></button>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4 tracking-wider">TIPOGRAFIA</h3>
+                <div class="space-y-3">
+                    <button onclick="setFont('cinzel')" class="w-full glass-card glass-button rounded-xl p-4 text-left flex items-center justify-between" id="font-cinzel"><div><div class="font-cinzel text-lg">Cinzel</div><div class="text-xs text-[var(--text-secondary)]">Serifada clássica</div></div><div class="w-4 h-4 rounded-full border-2 border-[var(--accent)] flex items-center justify-center"><div class="w-2 h-2 rounded-full bg-[var(--accent)]"></div></div></button>
+                    <button onclick="setFont('playfair')" class="w-full glass-card glass-button rounded-xl p-4 text-left flex items-center justify-between" id="font-playfair"><div><div class="font-playfair text-lg">Playfair Display</div><div class="text-xs text-[var(--text-secondary)]">Serifada moderna</div></div><div class="w-4 h-4 rounded-full border-2 border-[var(--text-secondary)]"></div></button>
+                    <button onclick="setFont('inter')" class="w-full glass-card glass-button rounded-xl p-4 text-left flex items-center justify-between" id="font-inter"><div><div class="font-sans text-lg">Inter</div><div class="text-xs text-[var(--text-secondary)]">Sans-serif neutra</div></div><div class="w-4 h-4 rounded-full border-2 border-[var(--text-secondary)]"></div></button>
+                    <button onclick="setFont('space')" class="w-full glass-card glass-button rounded-xl p-4 text-left flex items-center justify-between" id="font-space"><div><div class="font-space text-lg">Space Grotesk</div><div class="text-xs text-[var(--text-secondary)]">Geométrica futurista</div></div><div class="w-4 h-4 rounded-full border-2 border-[var(--text-secondary)]"></div></button>
+                </div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4 tracking-wider">INTENSIDADE DO BLUR</h3>
+                <div class="flex justify-between mb-2"><span class="text-sm">Desfoque do Wallpaper</span><span class="text-sm font-mono text-[var(--accent-light)]" id="blurValue">0px</span></div>
+                <input type="range" min="0" max="25" value="0" class="w-full" id="blurSlider" oninput="updateBlur(this.value)">
+                <div class="flex justify-between mt-1 text-xs text-[var(--text-secondary)]"><span>Transparente</span><span>Fosco denso</span></div>
+            </div>
+            <div class="glass-card rounded-2xl p-6">
+                <h3 class="font-cinzel text-sm font-semibold mb-4 tracking-wider">OPACIDADE DO VIDRO</h3>
+                <div class="flex justify-between mb-2"><span class="text-sm">Transparância dos Cards</span><span class="text-sm font-mono text-[var(--accent-light)]" id="opacityValue">15%</span></div>
+                <input type="range" min="5" max="40" value="15" class="w-full" id="opacitySlider" oninput="updateOpacity(this.value)">
+            </div>
+            <button onclick="clearAllData()" class="w-full glass-card rounded-xl p-4 text-red-400 text-sm font-medium border border-red-500/30">
+                ⚠️ Resetar Todos os Dados
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== ESTADO GLOBAL ====================
+        const defaultState = {
+            profile: { name: 'Soberano', image: null },
+            theme: { name: 'wine', font: 'cinzel', blur: 0, opacity: 15 },
+            radar: [75, 60, 82, 45, 90, 70],
+            tracker: { serenity: 3, intensity: 40, productivity: 75 },
+            notes: [],
+            tasks: [
+                { id: 1, title: 'Revisar contrato de parceria', deadline: 'Amanhã', priority: 'high', category: 'Finanças', done: false },
+                { id: 2, title: 'Preparar apresentação Q3', deadline: '3 dias', priority: 'medium', category: 'Estratégia', done: false },
+                { id: 3, title: 'Organizar biblioteca de PDFs', deadline: 'Sem prazo', priority: 'low', category: 'Erudição', done: false }
+            ],
+            checklist: {
+                lastReset: new Date().toDateString(),
+                items: [
+                    { id: 1, text: 'Acordar no horário programado', sub: 'Disciplina circadiana', done: false },
+                    { id: 2, text: 'Meditação / Foco profundo', sub: '15-30 minutos', done: false },
+                    { id: 3, text: 'Hidratação estratégica', sub: '2L ao longo do dia', done: false },
+                    { id: 4, text: 'Leitura de alta densidade', sub: 'Mínimo 20 páginas', done: false },
+                    { id: 5, text: 'Exercício físico', sub: 'Força ou mobilidade', done: false }
+                ]
+            },
+            transactions: [],
+            dailyNotes: [],
+            pdfs: []
+        };
+
+        let state = JSON.parse(JSON.stringify(defaultState));
+        let currentScreen = 'home';
+        let drawerOpen = false;
+        let taskFilter = 'all';
+
+        const radarLabels = [
+            { emoji: '📚', name: 'Erudição', desc: 'Tempo de leitura e densidade intelectual' },
+            { emoji: '💵', name: 'Finanças', desc: 'Disciplina de gastos e metas batidas' },
+            { emoji: '🧠', name: 'Psique', desc: 'Média ponderada do rastreador de humor' },
+            { emoji: '🍷', name: 'Etiqueta', desc: 'Progresso em relações e estratégias' },
+            { emoji: '🛡️', name: 'Rotina', desc: 'Conclusão de checklist e tarefas' },
+            { emoji: '⏳', name: 'Produtividade', desc: 'Eficiência diária autoavaliada' }
+        ];
+
+        const oracleData = [
+            { law: "Nunca ofusque o mestre. Faça com que aqueles acima de você se sintam superiores.", war: "A vitória vem da descoberta do padrão do inimigo, não da força bruta.", seduction: "Crie um vazio — uma sensação de ausência. O que está ausente desperta o desejo mais profundo.", app: "Em ambientes corporativos, posicione suas ideias como sugestões que permitem ao superior brilhar." },
+            { law: "Nunca confie demais nos amigos; aprenda a usar os inimigos.", war: "Quando o inimigo está relaxado, faça-o acreditar que você está ocupado.", seduction: "A ausência é para o amor o que o vento é para o fogo: apaga o pequeno, inflama o grande.", app: "Mantenha aliados próximos, mas nunca revele todas as suas cartas." },
+            { law: "Oculte suas intenções. Mantenha as pessoas na escuridão.", war: "Todo o exército prefere uma alta recompensa a um alto risco.", seduction: "O mistério é a mais poderosa das qualidades. O que é totalmente revelado é imediatamente esquecido.", app: "Em negociações, nunca revele seu limite real. Use a ambiguidade como arma de pressão." },
+            { law: "Diga sempre menos do que o necessário.", war: "Se o inimigo deixar uma porta aberta, você deve precipitar-se para entrar.", seduction: "A palavra é prata, o silêncio é ouro. Quem fala menos, parece mais profundo.", app: "Em reuniões, fale 20% do tempo e observe 80%. Quem fala menos, controla mais." },
+            { law: "Tanto depende da reputação. Guarde-a com sua vida.", war: "A habilidade suprema é derrotar o inimigo sem lutar.", seduction: "A reputação é uma máscara. Use-a para esconder intenções e criar expectativas.", app: "Construa uma reputação de confiabilidade estratégica — isso é moeda social mais valiosa que dinheiro." }
+        ];
+
+        const eruditionModules = {
+            social: { title: 'Dinâmicas de Grupo', subtitle: 'Localização e calibração social', content: '<p><strong>1. Leitura de Sala:</strong> Ao entrar em qualquer ambiente, pause por 3 segundos. Observe quem ocupa o centro espacial, quem está nas periferias e quem controla o fluxo de conversa.</p><p><strong>2. Calibração de Status:</strong> Nunca assuma status superior em território desconhecido. Use as primeiras 5 minutos para mapear hierarquias invisíveis.</p><p><strong>3. Alianças Táticas:</strong> Identifique o "conector" do grupo — aquele que conhece todos. Ele é o portão de entrada para qualquer rede social.</p><p><strong>4. Neutralidade Estratégica:</strong> Em conflitos internos de grupo, nunca tome lado na primeira semana. A informação é mais valiosa que a lealdade prematura.</p>' },
+            etiqueta: { title: 'Etiqueta & Refinamento', subtitle: 'Postura em ambientes de alta exigência', content: '<p><strong>1. O Aperto de Mão Real:</strong> Firme, mas não esmagador. 2-3 segundos de contato visual. Soltar antes que o outro sinta desconforto.</p><p><strong>2. Uso de Talheres:</strong> Trabalhe de fora para dentro. O garfo na mão esquerda permanece com as pontas para baixo (estilo continental).</p><p><strong>3. Silêncios Estratégicos:</strong> Após uma pergunta importante, conte mentalmente até 3 antes de responder. Isso demonstra ponderação.</p><p><strong>4. Vestimenta como Armadura:</strong> Vista-se 10% mais formal que o ambiente exige. Isso sinaliza respeito próprio e controle de narrativa.</p>' },
+            vocabulario: { title: 'Léxico Erudito', subtitle: 'Substituição de termos vulgares', content: '<p><strong>Princípio da Precisão:</strong> Um vocabulário limitado limita seu pensamento. Substitua palavras de uso comum por termos mais densos:</p><ul class="list-disc pl-5 space-y-1 mt-2"><li>"Bom" → "Excepcional", "Notável", "Consonante"</li><li>"Mau" → "Disfuncional", "Contraproducente", "Iníquo"</li><li>"Fazer" → "Executar", "Materializar", "Concretizar"</li><li>"Pensar" → "Conceber", "Especular", "Raciocinar"</li></ul><p class="mt-3"><strong>Exercício Diário:</strong> Escolha 3 palavras do seu dia e encontre sinônimos de camada superior. Use-os ativamente por 48h.</p>' },
+            escrita: { title: 'Expressão Textual', subtitle: 'Precisão, fluidez e evocação', content: '<p><strong>1. Economia Verbal:</strong> Elimine adjetivos redundantes. "Muito bom" é redundante. "Bom" ou "Excepcional" — escolha um.</p><p><strong>2. Estrutura Invertida:</strong> Comece frases importantes com o objeto, não o sujeito. "A decisão, após meses de análise, foi tomada."</p><p><strong>3. Metáforas Conceituais:</strong> Não use metáforas óbvias. Em vez de "tempo é dinheiro", use "tempo é território — cada hora é uma fronteira a ser defendida."</p><p><strong>4. Revisão Cirúrgica:</strong> Após escrever, remova 20% do texto. O que sobreviver é essencial.</p>' },
+            fala: { title: 'Oratória & Modulação', subtitle: 'Tom, ritmo e pausas estratégicas', content: '<p><strong>1. Controle do Ritmo:</strong> Fale 20% mais devagar que sua velocidade natural. A velocidade transmite ansiedade; a lentidão, autoridade.</p><p><strong>2. Pausas de Poder:</strong> Após afirmações importantes, pause por 2-3 segundos. O silêncio força o ouvinte a processar e atribuir peso.</p><p><strong>3. Variação de Tom:</strong> Monotonia mata a atenção. Abaixe o tom para confidências, eleve para ênfases, mas nunca grite.</p><p><strong>4. A Arte da Pergunta Retórica:</strong> "Você já parou para pensar...?" cria uma falsa participação, mas mantém você no controle do diálogo.</p>' },
+            postura: { title: 'Linguagem Corporal', subtitle: 'Domínio de espaço e microexpressões', content: '<p><strong>1. Ocupação de Território:</strong> Em ambientes sentados, posicione seus itens (copo, celular, pasta) em um arco de 90°. Isso marca território sem agressão.</p><p><strong>2. Microexpressões:</strong> Pratique o "sorriso Duchenne" — envolva os músculos ao redor dos olhos. Sorrisos falsos usam apenas a boca.</p><p><strong>3. Espelhamento Tático:</strong> Espelhe a postura do interlocutor após 30-60 segundos. Isso cria inconscientemente empatia e confiança.</p><p><strong>4. Saídas Elegantes:</strong> Nunca se despeça de costas. Dê um passo lateral, mantenha contato visual por 1 segundo, depois vire-se.</p>' },
+            habitos: { title: 'Engenharia de Comportamento', subtitle: 'Rituais de foco e automação', content: '<p><strong>1. Gatilhos de Contexto:</strong> Associe hábitos a locais específicos. "Sento nesta cadeira apenas para trabalho profundo."</p><p><strong>2. Regra dos 2 Minutos:</strong> Se um hábito leva menos de 2 minutos, faça imediatamente. A procrastinação começa na indecisão.</p><p><strong>3. Cadeias Inquebráveis:</strong> Marque em um calendário físico cada dia que cumprir o hábito. Não quebre a corrente.</p><p><strong>4. Identidade sobre Resultados:</strong> Não diga "quero correr". Diga "sou corredor". A identidade molda ações mais que metas.</p>' },
+            rotina: { title: 'Otimização Biológica', subtitle: 'Estruturação do tempo e energia', content: '<p><strong>1. Cronotipos:</strong> Identifique se você é vespertino ou matutino. Programe tarefas de alta cognição nas suas 3 horas de pico.</p><p><strong>2. Blocos de 90 Minutos:</strong> A ultradiana humana opera em ciclos de 90 min. Trabalhe 90, descanse 20. Nunca ignore o ciclo.</p><p><strong>3. Transições Ritualizadas:</strong> Crie um ritual de 5 minutos entre contextos (trabalho → casa). Isso reseta o sistema nervoso.</p><p><strong>4. Janela de Decisões:</strong> Tome decisões importantes antes das 11h. A glicose cerebral degrada ao longo do dia, reduzindo a qualidade do julgamento.</p>' }
+        };
+
+        // ==================== PERSISTÊNCIA ====================
+        function salvarDados() {
+            try {
+                localStorage.setItem('f48k_state', JSON.stringify(state));
+            } catch (e) {
+                console.warn('Storage limit exceeded');
+            }
+        }
+
+        function carregarDados() {
+            const saved = localStorage.getItem('f48k_state');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    state = { ...defaultState, ...parsed };
+                    if (!state.checklist) state.checklist = defaultState.checklist;
+                    if (!state.tracker) state.tracker = defaultState.tracker;
+                    if (!state.profile) state.profile = defaultState.profile;
+                    if (!state.theme) state.theme = defaultState.theme;
+                } catch (e) {
+                    console.error('Failed to parse saved state');
+                }
+            }
+        }
+
+        // ==================== INICIALIZAÇÃO ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarDados();
+            generateChessPieces();
+            initRadar();
+            loadOracle();
+            setupSwipe();
+            applySavedTheme();
+            renderChecklist();
+            renderTasks();
+            renderNotes();
+            renderTransactions();
+            renderPDFs();
+            updateHomeStats();
+            checkDailyReset();
         });
-      }
-    } else if (state.firebaseReady) {
-      syncToFirestore();
-      listenFromFirestore();
-      listenChatFromFirebase();
-      updateFirebasePresence();
-      listenGlobalPresence();
-    }
-  } else {
-    if (localInstr) localInstr.style.display = 'inline';
-    if (firebaseInstr) firebaseInstr.style.display = 'none';
-    if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'none';
-    if (currentModeText) currentModeText.textContent = 'Modo Local';
 
-    if (unsubRoutines) { unsubRoutines(); unsubRoutines = null; }
-    if (unsubChat) { unsubChat(); unsubChat = null; }
-    if (unsubPresence) { unsubPresence(); unsubPresence = null; }
-    updateConnectionStatus('offline');
-  }
-}
+        function generateChessPieces() {
+            const pieces = ['♔', '♕', '♖', '♗', '♘', '♙', '♚', '♛', '♜', '♝', '♞', '♟'];
+            const container = document.getElementById('wallpaper');
+            for (let i = 0; i < 15; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'chess-piece';
+                piece.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.animationDelay = Math.random() * 20 + 's';
+                piece.style.animationDuration = (15 + Math.random() * 10) + 's';
+                piece.style.fontSize = (2 + Math.random() * 3) + 'rem';
+                container.appendChild(piece);
+            }
+        }
 
-// ===== INICIALIZAÇÃO =====
-window.onload = function() {
-  loadLocal();
+        function toggleDrawer() {
+            drawerOpen = !drawerOpen;
+            document.getElementById('navDrawer').classList.toggle('open', drawerOpen);
+            document.getElementById('drawerOverlay').classList.toggle('open', drawerOpen);
+        }
 
-  // Atualizar badge do usuário
-  $('user-badge').innerHTML = `${state.user.emoji} ${state.user.name} <span class="edit-icon">✎</span>`;
-  $('finance-date').value = new Date().toISOString().split('T')[0];
+        function navigateTo(screen) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screen).classList.add('active');
+            const titles = {
+                'home': 'FORTY-EIGHT KINGS',
+                'performance': 'MEU DESEMPENHO',
+                'erudition': 'ERUDIÇÃO',
+                'erudition-module': 'MÓDULO',
+                'checklist': 'RITUAIS',
+                'tasks': 'ESTRATÉGIA',
+                'notes': 'ANOTAÇÕES',
+                'finance': 'TESOURARIA',
+                'settings': 'CONFIGURAÇÕES'
+            };
+            document.getElementById('headerTitle').textContent = titles[screen] || 'FORTY-EIGHT KINGS';
+            currentScreen = screen;
+            if (drawerOpen) toggleDrawer();
+            if (screen === 'performance') setTimeout(initRadar, 100);
+            if (screen === 'home') updateHomeStats();
+        }
 
-  // Restaurar estado do painel de presença
-  if (state.presenceCollapsed) {
-    $('presence-panel').classList.add('collapsed');
-    $('main-content').classList.add('presence-collapsed');
-  }
+        // ==================== RADAR CHART ====================
+        function initRadar() {
+            const centerX = 140, centerY = 140, radius = 100, levels = 5;
+            const angleStep = (Math.PI * 2) / 6;
+            const gridGroup = document.getElementById('radarGrid');
+            gridGroup.innerHTML = '';
 
-  initDaysSelector();
-  renderRoutines();
-  renderFinances();
-  renderChecklist();
-  renderFiles();
-  renderChat();
-  renderPresence();
-  drawMiniRadar();
-  updateTimerDisplay();
+            for (let i = 1; i <= levels; i++) {
+                const r = (radius / levels) * i;
+                let points = '';
+                for (let j = 0; j < 6; j++) {
+                    const angle = j * angleStep - Math.PI / 2;
+                    points += `${centerX + r * Math.cos(angle)},${centerY + r * Math.sin(angle)} `;
+                }
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', points);
+                polygon.setAttribute('class', 'radar-grid');
+                gridGroup.appendChild(polygon);
+            }
 
-  // Restaurar modo de conexão
-  if (state.connectionMode === 'firebase') {
-    $('mode-firebase').classList.add('active');
-    $('mode-local').classList.remove('active');
-    setTimeout(() => {
-      const ok = initFirebase();
-      if (ok) {
-        signInAnon().then(() => {
-          syncToFirestore();
-          listenFromFirestore();
-          listenChatFromFirebase();
-          updateFirebasePresence();
-          listenGlobalPresence();
+            for (let i = 0; i < 6; i++) {
+                const angle = i * angleStep - Math.PI / 2;
+                const x2 = centerX + radius * Math.cos(angle);
+                const y2 = centerY + radius * Math.sin(angle);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', centerX);
+                line.setAttribute('y1', centerY);
+                line.setAttribute('x2', x2);
+                line.setAttribute('y2', y2);
+                line.setAttribute('class', 'radar-axis');
+                gridGroup.appendChild(line);
+            }
 
-          const localInstr = $('local-instructions');
-          const firebaseInstr = $('firebase-instructions');
-          const firebaseConfigDisplay = $('firebase-config-display');
-          const currentModeText = $('current-mode-text');
-          if (localInstr) localInstr.style.display = 'none';
-          if (firebaseInstr) firebaseInstr.style.display = 'inline';
-          if (firebaseConfigDisplay) firebaseConfigDisplay.style.display = 'block';
-          if (currentModeText) currentModeText.textContent = 'Modo Firebase';
-        }).catch(console.error);
-      }
-    }, 500);
-  } else {
-    $('mode-local').classList.add('active');
-  }
+            updateRadarData();
+        }
 
-  if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission();
-  }
-};
+        function updateRadarData() {
+            const centerX = 140, centerY = 140, radius = 100;
+            const angleStep = (Math.PI * 2) / 6;
+            let dataPoints = '';
+            const pointsGroup = document.getElementById('radarPoints');
+            const labelsGroup = document.getElementById('radarLabels');
+            pointsGroup.innerHTML = '';
+            labelsGroup.innerHTML = '';
 
-window.onbeforeunload = function() {
-  saveLocal();
-  if (state.connectionMode === 'firebase' && db && state.firebaseUser) {
-    db.collection('presence').doc(state.firebaseUser.uid).update({ isOnline: false });
-  }
-};
-</script>
+            for (let i = 0; i < 6; i++) {
+                const angle = i * angleStep - Math.PI / 2;
+                const value = state.radar[i] / 100;
+                const x = centerX + (radius * value) * Math.cos(angle);
+                const y = centerY + (radius * value) * Math.sin(angle);
+                dataPoints += `${x},${y} `;
+
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', x);
+                circle.setAttribute('cy', y);
+                circle.setAttribute('r', '5');
+                circle.setAttribute('class', 'radar-point');
+                circle.setAttribute('data-index', i);
+                circle.addEventListener('click', (e) => showTooltip(e, i));
+                pointsGroup.appendChild(circle);
+
+                const labelRadius = radius + 25;
+                const lx = centerX + labelRadius * Math.cos(angle);
+                const ly = centerY + labelRadius * Math.sin(angle);
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', lx);
+                text.setAttribute('y', ly);
+                text.setAttribute('class', 'radar-label');
+                text.textContent = radarLabels[i].emoji;
+                text.addEventListener('click', (e) => showTooltip(e, i));
+                labelsGroup.appendChild(text);
+            }
+
+            document.getElementById('radarData').setAttribute('points', dataPoints);
+        }
+
+        function showTooltip(event, index) {
+            const tooltip = document.getElementById('tooltip');
+            const rect = event.target.getBoundingClientRect();
+            document.getElementById('tooltipTitle').textContent = radarLabels[index].name;
+            document.getElementById('tooltipDesc').textContent = radarLabels[index].desc;
+            document.getElementById('tooltipValue').textContent = state.radar[index] + '%';
+            tooltip.style.left = (rect.left + rect.width / 2 - 100) + 'px';
+            tooltip.style.top = (rect.top - 100) + 'px';
+            tooltip.classList.add('show');
+            setTimeout(() => tooltip.classList.remove('show'), 3000);
+        }
+
+        // ==================== TRACKER (ACOPLADO AO RADAR) ====================
+        function updateTracker(type, value) {
+            const val = parseInt(value);
+            state.tracker[type] = val;
+
+            if (type === 'serenity') {
+                document.getElementById('serenityValue').textContent = val + '/5';
+                state.radar[2] = (val / 5) * 100; // Psique
+            }
+            if (type === 'intensity') {
+                document.getElementById('intensityValue').textContent = val + '%';
+                // Intensidade emocional afeta Psique inversamente (alta intensidade = baixa serenidade)
+                state.radar[2] = Math.max(0, state.radar[2] - (val > 50 ? (val - 50) * 0.5 : 0));
+            }
+            if (type === 'productivity') {
+                document.getElementById('productivityValue').textContent = val + '%';
+                state.radar[5] = val; // Produtividade
+            }
+
+            updateRadarData();
+            salvarDados();
+        }
+
+        function saveDailyNote() {
+            const note = document.getElementById('dailyNote').value.trim();
+            if (!note) return;
+
+            const entry = {
+                id: Date.now(),
+                text: note,
+                date: new Date().toLocaleDateString('pt-BR'),
+                timestamp: Date.now()
+            };
+
+            state.dailyNotes.unshift(entry);
+            if (state.dailyNotes.length > 10) state.dailyNotes.pop();
+
+            document.getElementById('dailyNote').value = '';
+            renderDailyNotes();
+            salvarDados();
+        }
+
+        function renderDailyNotes() {
+            const container = document.getElementById('notesHistory');
+            const now = Date.now();
+            const recent = state.dailyNotes.filter(n => (now - n.timestamp) < 48 * 60 * 60 * 1000);
+
+            container.innerHTML = recent.map(n => `
+                <div class="glass-card rounded-lg p-3 text-xs">
+                    <div class="text-[var(--text-secondary)] mb-1">${n.date}</div>
+                    <div>${n.text}</div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== ORACLE ====================
+        function loadOracle() {
+            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            const index = dayOfYear % 48;
+            const data = oracleData[index % oracleData.length];
+            document.getElementById('oracleDay').textContent = index + 1;
+            document.getElementById('oracleLaw').textContent = '"' + data.law + '"';
+            document.getElementById('oracleWar').textContent = '"' + data.war + '"';
+            document.getElementById('oracleSeduction').textContent = '"' + data.seduction + '"';
+            document.getElementById('oracleApp').textContent = data.app;
+        }
+
+        function showEruditionModule(moduleId) {
+            const mod = eruditionModules[moduleId];
+            if (!mod) return;
+            document.getElementById('moduleTitle').textContent = mod.title;
+            document.getElementById('moduleSubtitle').textContent = mod.subtitle;
+            document.getElementById('moduleContent').innerHTML = mod.content;
+            navigateTo('erudition-module');
+        }
+
+        // ==================== CHECKLIST ====================
+        function checkDailyReset() {
+            const today = new Date().toDateString();
+            if (state.checklist.lastReset !== today) {
+                // Save previous day stats
+                const done = state.checklist.items.filter(i => i.done).length;
+                const total = state.checklist.items.length;
+                state.radar[4] = Math.round((done / total) * 100); // Escudo/Rotina
+
+                // Reset
+                state.checklist.items.forEach(i => i.done = false);
+                state.checklist.lastReset = today;
+                salvarDados();
+            }
+            document.getElementById('lastResetDate').textContent = state.checklist.lastReset;
+        }
+
+        function renderChecklist() {
+            const container = document.getElementById('checklistContainer');
+            container.innerHTML = state.checklist.items.map((item, idx) => `
+                <div class="glass-card rounded-xl p-4 flex items-center gap-4 check-item ${item.done ? 'checked' : ''} cursor-pointer" onclick="toggleCheckItem(${idx})">
+                    <div class="w-6 h-6 rounded-full border-2 border-[var(--text-secondary)] flex items-center justify-center check-circle transition-all">
+                        <svg class="w-4 h-4 text-white opacity-0 check-icon transition-opacity ${item.done ? 'opacity-100' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium">${item.text}</div>
+                        <div class="text-xs text-[var(--text-secondary)]">${item.sub}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const done = state.checklist.items.filter(i => i.done).length;
+            state.radar[4] = Math.round((done / state.checklist.items.length) * 100);
+        }
+
+        function toggleCheckItem(idx) {
+            state.checklist.items[idx].done = !state.checklist.items[idx].done;
+            renderChecklist();
+            updateRadarData();
+            if (navigator.vibrate) navigator.vibrate(50);
+            salvarDados();
+        }
+
+        // ==================== TASKS ====================
+        function filterTasks(filter) {
+            taskFilter = filter;
+            document.querySelectorAll('[id^="filter-"]').forEach(btn => {
+                btn.classList.remove('border-[var(--accent)]', 'bg-[var(--accent)]/20');
+                btn.classList.add('opacity-60');
+            });
+            document.getElementById('filter-' + filter).classList.add('border-[var(--accent)]', 'bg-[var(--accent)]/20');
+            document.getElementById('filter-' + filter).classList.remove('opacity-60');
+            renderTasks();
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('tasksContainer');
+            let tasks = state.tasks.filter(t => !t.done);
+            if (taskFilter !== 'all') tasks = tasks.filter(t => t.priority === taskFilter);
+
+            const priorityColors = { high: 'border-red-500/60', medium: 'border-yellow-500/60', low: 'border-green-500/60' };
+            const priorityLabels = { high: 'URGENTE', medium: 'MÉDIA', low: 'BAIXA' };
+            const priorityBg = { high: 'bg-red-500/20 text-red-300', medium: 'bg-yellow-500/20 text-yellow-300', low: 'bg-green-500/20 text-green-300' };
+
+            container.innerHTML = tasks.map(t => `
+                <div class="glass-card rounded-xl p-4 border-l-4 ${priorityColors[t.priority]}">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="font-medium">${t.title}</span>
+                        <span class="text-xs px-2 py-1 rounded ${priorityBg[t.priority]}">${priorityLabels[t.priority]}</span>
+                    </div>
+                    <div class="text-xs text-[var(--text-secondary)] mb-3">Prazo: ${t.deadline} • ${t.category}</div>
+                    <div class="flex gap-2">
+                        <button onclick="completeTask(${t.id})" class="flex-1 glass-card rounded-lg py-2 text-xs text-green-400 border border-green-500/30">Concluir</button>
+                        <button onclick="deleteTask(${t.id})" class="px-3 glass-card rounded-lg py-2 text-xs text-red-400 border border-red-500/30">✕</button>
+                    </div>
+                </div>
+            `).join('');
+
+            const done = state.tasks.filter(t => t.done).length;
+            const total = state.tasks.length;
+            state.radar[4] = Math.round(((done + state.checklist.items.filter(i => i.done).length) / (total + state.checklist.items.length)) * 100);
+        }
+
+        function openTaskModal() {
+            const content = `
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-cinzel text-lg font-semibold mb-4">Nova Tarefa Estratégica</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Título</label>
+                            <input type="text" id="taskTitle" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" placeholder="Nome da missão...">
+                        </div>
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Prazo</label>
+                            <input type="text" id="taskDeadline" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" placeholder="Ex: Amanhã, 3 dias...">
+                        </div>
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Prioridade</label>
+                            <select id="taskPriority" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]">
+                                <option value="high">Alta (Urgente)</option>
+                                <option value="medium">Média</option>
+                                <option value="low">Baixa</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Categoria</label>
+                            <input type="text" id="taskCategory" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" placeholder="Ex: Finanças, Estratégia...">
+                        </div>
+                        <button onclick="createTask()" class="w-full glass-card glass-button rounded-xl p-3 text-[var(--accent-light)] font-medium">Criar Tarefa</button>
+                    </div>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function createTask() {
+            const title = document.getElementById('taskTitle').value.trim();
+            const deadline = document.getElementById('taskDeadline').value.trim() || 'Sem prazo';
+            const priority = document.getElementById('taskPriority').value;
+            const category = document.getElementById('taskCategory').value.trim() || 'Geral';
+
+            if (!title) return;
+
+            state.tasks.push({
+                id: Date.now(),
+                title, deadline, priority, category, done: false
+            });
+
+            closeModal();
+            renderTasks();
+            salvarDados();
+        }
+
+        function completeTask(id) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) {
+                task.done = true;
+                renderTasks();
+                updateRadarData();
+                salvarDados();
+            }
+        }
+
+        function deleteTask(id) {
+            state.tasks = state.tasks.filter(t => t.id !== id);
+            renderTasks();
+            salvarDados();
+        }
+
+        // ==================== NOTES ====================
+        function saveNote() {
+            const title = document.getElementById('noteTitle').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+
+            if (!content) return;
+
+            const note = {
+                id: Date.now(),
+                title: title || 'Sem título',
+                content: content,
+                date: new Date().toLocaleDateString('pt-BR'),
+                timestamp: Date.now()
+            };
+
+            state.notes.unshift(note);
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            renderNotes();
+            salvarDados();
+        }
+
+        function renderNotes() {
+            const container = document.getElementById('notesList');
+            container.innerHTML = state.notes.map(n => `
+                <div class="glass-card rounded-xl p-4 cursor-pointer" onclick="editNote(${n.id})">
+                    <div class="font-medium mb-1">${n.title}</div>
+                    <div class="text-xs text-[var(--text-secondary)]">Modificado ${n.date}</div>
+                </div>
+            `).join('');
+        }
+
+        function editNote(id) {
+            const note = state.notes.find(n => n.id === id);
+            if (!note) return;
+
+            document.getElementById('noteTitle').value = note.title;
+            document.getElementById('noteContent').value = note.content;
+            state.notes = state.notes.filter(n => n.id !== id);
+            renderNotes();
+            salvarDados();
+        }
+
+        // ==================== FINANCE ====================
+        function renderTransactions() {
+            const container = document.getElementById('transactionsList');
+            let income = 0, expense = 0;
+
+            state.transactions.forEach(t => {
+                if (t.type === 'income') income += t.amount;
+                else expense += t.amount;
+            });
+
+            const balance = income - expense;
+
+            document.getElementById('financeBalance').textContent = 'R$ ' + balance.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('financeIncome').textContent = 'R$ ' + income.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+            document.getElementById('financeExpense').textContent = 'R$ ' + expense.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+            // Update radar finance
+            const target = 5000; // meta mensal
+            state.radar[1] = Math.min(100, Math.round((income / target) * 100));
+
+            // Savings goal
+            const savingsGoal = 50000;
+            const currentSavings = Math.max(0, balance);
+            const percent = Math.min(100, Math.round((currentSavings / savingsGoal) * 100));
+            document.getElementById('savingsPercent').textContent = percent + '%';
+            document.getElementById('savingsBar').style.width = percent + '%';
+            document.getElementById('savingsText').textContent = `Meta: R$ ${savingsGoal.toLocaleString('pt-BR')} • Atual: R$ ${currentSavings.toLocaleString('pt-BR')}`;
+
+            container.innerHTML = state.transactions.map(t => `
+                <div class="flex justify-between items-center p-3 rounded-lg bg-black/20">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full ${t.type === 'income' ? 'bg-green-500/20' : 'bg-red-500/20'} flex items-center justify-center text-sm">${t.type === 'income' ? '↑' : '↓'}</div>
+                        <div>
+                            <div class="text-sm font-medium">${t.name}</div>
+                            <div class="text-xs text-[var(--text-secondary)]">${t.date}</div>
+                        </div>
+                    </div>
+                    <span class="font-mono ${t.type === 'income' ? 'text-green-300' : 'text-red-300'}">${t.type === 'income' ? '+' : '-'}R$ ${t.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</span>
+                </div>
+            `).join('');
+        }
+
+        function openTransactionModal() {
+            const content = `
+                <div class="glass-card rounded-2xl p-6">
+                    <h3 class="font-cinzel text-lg font-semibold mb-4">Novo Lançamento</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Nome da Transação</label>
+                            <input type="text" id="transName" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" placeholder="Ex: Salário, Aluguel...">
+                        </div>
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Valor (R$)</label>
+                            <input type="number" id="transAmount" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]" placeholder="0,00" step="0.01">
+                        </div>
+                        <div>
+                            <label class="text-xs text-[var(--text-secondary)] block mb-1">Tipo</label>
+                            <select id="transType" class="w-full bg-black/20 border border-[var(--glass-border)] rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[var(--accent)]">
+                                <option value="income">Entrada (+)</option>
+                                <option value="expense">Saída (-)</option>
+                            </select>
+                        </div>
+                        <button onclick="createTransaction()" class="w-full glass-card glass-button rounded-xl p-3 text-[var(--accent-light)] font-medium">Registrar</button>
+                    </div>
+                </div>
+            `;
+            showModal(content);
+        }
+
+        function createTransaction() {
+            const name = document.getElementById('transName').value.trim();
+            const amount = parseFloat(document.getElementById('transAmount').value);
+            const type = document.getElementById('transType').value;
+
+            if (!name || isNaN(amount) || amount <= 0) return;
+
+            state.transactions.push({
+                id: Date.now(),
+                name, amount, type,
+                date: new Date().toLocaleDateString('pt-BR')
+            });
+
+            closeModal();
+            renderTransactions();
+            updateRadarData();
+            salvarDados();
+        }
+
+        // ==================== PDF UPLOAD ====================
+        function handlePDFUpload(input) {
+            const file = input.files[0];
+            if (!file || file.type !== 'application/pdf') return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const pdf = {
+                    id: Date.now(),
+                    name: file.name,
+                    data: e.target.result
+                };
+                state.pdfs.push(pdf);
+                renderPDFs();
+                salvarDados();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function renderPDFs() {
+            const container = document.getElementById('pdfList');
+            container.innerHTML = state.pdfs.map(p => `
+                <div class="glass-card rounded-lg p-3 flex items-center justify-between cursor-pointer" onclick="openPDF(${p.id})">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xl">📄</span>
+                        <div class="text-sm truncate max-w-[200px]">${p.name}</div>
+                    </div>
+                    <button onclick="event.stopPropagation(); deletePDF(${p.id})" class="text-red-400 text-xs px-2">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function openPDF(id) {
+            const pdf = state.pdfs.find(p => p.id === id);
+            if (!pdf) return;
+            window.open(pdf.data, '_blank');
+        }
+
+        function deletePDF(id) {
+            state.pdfs = state.pdfs.filter(p => p.id !== id);
+            renderPDFs();
+            salvarDados();
+        }
+
+        // ==================== THEME & PROFILE ====================
+        function applySavedTheme() {
+            document.body.className = document.body.className.replace(/theme-\w+/, 'theme-' + state.theme.name);
+            document.getElementById('blurSlider').value = state.theme.blur;
+            document.getElementById('opacitySlider').value = state.theme.opacity;
+            document.getElementById('blurValue').textContent = state.theme.blur + 'px';
+            document.getElementById('opacityValue').textContent = state.theme.opacity + '%';
+            document.getElementById('blurOverlay').style.backdropFilter = 'blur(' + state.theme.blur + 'px)';
+            document.getElementById('profileNameInput').value = state.profile.name;
+
+            // Update profile names
+            document.getElementById('homeUserName').textContent = state.profile.name;
+            document.getElementById('perfUserName').textContent = 'Perfil de ' + state.profile.name;
+            document.getElementById('navProfileName').textContent = state.profile.name;
+            document.getElementById('financeUserName').textContent = state.profile.name;
+
+            // Update theme buttons
+            document.querySelectorAll('[id^="theme-"]').forEach(btn => btn.classList.remove('border-2', 'border-[var(--accent)]'));
+            document.getElementById('theme-' + state.theme.name)?.classList.add('border-2', 'border-[var(--accent)]');
+
+            // Update font buttons
+            document.querySelectorAll('[id^="font-"]').forEach(btn => {
+                btn.querySelector('.w-4').innerHTML = '<div class="w-2 h-2 rounded-full bg-[var(--text-secondary)]"></div>';
+            });
+            const activeFont = document.getElementById('font-' + state.theme.font);
+            if (activeFont) activeFont.querySelector('.w-4').innerHTML = '<div class="w-2 h-2 rounded-full bg-[var(--accent)]"></div>';
+
+            setFont(state.theme.font);
+
+            // Profile image
+            if (state.profile.image) {
+                updateProfileImageDisplay(state.profile.image);
+            }
+        }
+
+        function setTheme(theme) {
+            state.theme.name = theme;
+            document.body.className = document.body.className.replace(/theme-\w+/, 'theme-' + theme);
+            document.querySelectorAll('[id^="theme-"]').forEach(btn => btn.classList.remove('border-2', 'border-[var(--accent)]'));
+            document.getElementById('theme-' + theme).classList.add('border-2', 'border-[var(--accent)]');
+            salvarDados();
+        }
+
+        function setFont(font) {
+            state.theme.font = font;
+            const fonts = {
+                'cinzel': "'Cinzel', serif",
+                'playfair': "'Playfair Display', serif",
+                'inter': "'Inter', sans-serif",
+                'space': "'Space Grotesk', sans-serif"
+            };
+            document.body.style.fontFamily = fonts[font] || fonts['inter'];
+
+            document.querySelectorAll('[id^="font-"]').forEach(btn => {
+                btn.querySelector('.w-4').innerHTML = '<div class="w-2 h-2 rounded-full bg-[var(--text-secondary)]"></div>';
+            });
+            document.getElementById('font-' + font).querySelector('.w-4').innerHTML = '<div class="w-2 h-2 rounded-full bg-[var(--accent)]"></div>';
+            salvarDados();
+        }
+
+        function updateBlur(value) {
+            state.theme.blur = parseInt(value);
+            document.getElementById('blurOverlay').style.backdropFilter = 'blur(' + value + 'px)';
+            document.getElementById('blurValue').textContent = value + 'px';
+            salvarDados();
+        }
+
+        function updateOpacity(value) {
+            state.theme.opacity = parseInt(value);
+            document.getElementById('opacityValue').textContent = value + '%';
+            salvarDados();
+        }
+
+        function updateProfileName(name) {
+            if (!name.trim()) return;
+            state.profile.name = name.trim();
+            document.getElementById('homeUserName').textContent = state.profile.name;
+            document.getElementById('perfUserName').textContent = 'Perfil de ' + state.profile.name;
+            document.getElementById('navProfileName').textContent = state.profile.name;
+            document.getElementById('financeUserName').textContent = state.profile.name;
+            salvarDados();
+        }
+
+        function handleProfileImage(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                state.profile.image = e.target.result;
+                updateProfileImageDisplay(e.target.result);
+                salvarDados();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateProfileImageDisplay(dataUrl) {
+            const imgs = ['navProfilePic', 'perfProfilePic', 'settingsProfilePic'];
+            imgs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerHTML = '<img src="' + dataUrl + '" class="w-full h-full object-cover">';
+                }
+            });
+        }
+
+        // ==================== MODAL ====================
+        function showModal(content) {
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalOverlay').classList.add('open');
+        }
+
+        function closeModal(event) {
+            if (event && event.target !== document.getElementById('modalOverlay')) return;
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+
+        // ==================== HOME STATS ====================
+        function updateHomeStats() {
+            document.getElementById('homeProd').textContent = state.radar[5] + '%';
+            const done = state.checklist.items.filter(i => i.done).length;
+            document.getElementById('homeRituals').textContent = done + '/' + state.checklist.items.length;
+
+            let income = 0, expense = 0;
+            state.transactions.forEach(t => {
+                if (t.type === 'income') income += t.amount;
+                else expense += t.amount;
+            });
+            const balance = income - expense;
+            document.getElementById('homeBalance').textContent = 'R$ ' + balance.toLocaleString('pt-BR');
+        }
+
+        function clearAllData() {
+            if (!confirm('ATENÇÃO: Isso apagará TODOS os dados permanentemente. Continuar?')) return;
+            localStorage.removeItem('f48k_state');
+            location.reload();
+        }
+
+        // ==================== SWIPE ====================
+        function setupSwipe() {
+            let startX = 0;
+            document.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+            document.addEventListener('touchend', e => {
+                const endX = e.changedTouches[0].clientX;
+                const diff = endX - startX;
+                if (diff > 100 && startX < 50) toggleDrawer();
+                if (diff < -100 && drawerOpen) toggleDrawer();
+            });
+        }
+    </script>
 </body>
 </html>
