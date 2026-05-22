@@ -71,7 +71,14 @@
         .hidden { display: none !important; }
         input[type="text"], input[type="number"], textarea, select { font-family: inherit; color: var(--text-primary); }
         ::placeholder { color: rgba(240, 230, 211, 0.4); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+        .tip-accumulated { animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(20px); background: rgba(20, 5, 15, 0.95); border: 1px solid var(--accent); padding: 12px 24px; border-radius: 12px; backdrop-filter: blur(10px); z-index: 200; opacity: 0; transition: all 0.3s ease; pointer-events: none; font-size: 14px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
+<base target="_blank">
 <base target="_blank">
 </head>
 <body class="theme-wine text-[var(--text-primary)]">
@@ -281,10 +288,45 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 Voltar ao Grimório
             </button>
+
+            <!-- DICA DO DIA -->
+            <div class="glass-card rounded-2xl p-6 mb-2 border-2 border-[var(--accent)]/30 relative overflow-hidden" id="moduleDailyTip">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 rounded-full blur-3xl -mr-10 -mt-10"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">💡</span>
+                            <h3 class="font-cinzel text-sm font-semibold tracking-wider">DICA DO DIA</h3>
+                        </div>
+                        <span class="text-xs text-[var(--text-secondary)] font-mono" id="tipDate"></span>
+                    </div>
+                    <div id="tipContent"></div>
+                    <div class="flex gap-2 mt-4">
+                        <button onclick="addTipToNotes()" class="flex-1 glass-card glass-button rounded-lg py-2.5 text-xs text-[var(--accent-light)] border border-[var(--accent)]/30 flex items-center justify-center gap-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Adicionar às Notas
+                        </button>
+                        <button onclick="accumulateTip()" class="flex-1 glass-card glass-button rounded-lg py-2.5 text-xs text-[var(--accent-light)] border border-[var(--accent)]/30 flex items-center justify-center gap-1">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+                            Acumular
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <div class="glass-card rounded-2xl p-6">
                 <h2 class="font-cinzel text-xl font-bold mb-2" id="moduleTitle">Módulo</h2>
                 <p class="text-sm text-[var(--text-secondary)] mb-4" id="moduleSubtitle">Descrição</p>
                 <div class="space-y-4 text-sm leading-relaxed text-[var(--text-primary)]" id="moduleContent"></div>
+            </div>
+
+            <!-- DICAS ACUMULADAS -->
+            <div class="glass-card rounded-2xl p-6 mt-2" id="accumulatedTipsSection">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="font-cinzel text-sm font-semibold tracking-wider">📚 DICAS ACUMULADAS</h3>
+                    <span class="text-xs text-[var(--text-secondary)]" id="accumulatedCount">0</span>
+                </div>
+                <div class="space-y-3" id="accumulatedTipsList"></div>
             </div>
         </div>
     </div>
@@ -322,7 +364,13 @@
     <div class="screen custom-scroll" id="screen-notes">
         <div class="px-5 py-4 space-y-4">
             <div class="glass-card rounded-2xl p-6 text-center mb-2"><span class="text-4xl">📒</span><h2 class="font-cinzel text-xl font-bold mt-2">Anotações</h2><p class="text-sm text-[var(--text-secondary)]">Bloco de notas com markdown básico</p></div>
-            <div class="glass-card rounded-xl p-4">
+
+            <button onclick="newNote()" class="w-full glass-card glass-button rounded-xl p-3 flex items-center justify-center gap-2 text-[var(--accent-light)] mb-2">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Nova Anotação
+            </button>
+
+            <div class="glass-card rounded-xl p-4" id="noteEditor">
                 <input type="text" id="noteTitle" placeholder="Título da nota..." class="w-full bg-transparent border-none text-lg font-medium placeholder-[var(--text-secondary)]/50 focus:outline-none mb-3">
                 <textarea id="noteContent" class="w-full bg-transparent border-none text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)]/50 resize-none focus:outline-none" rows="8" placeholder="# Insight do dia
 
@@ -332,7 +380,7 @@
 
 > 'A pressa do outro é a sua paciência.'"></textarea>
                 <div class="flex justify-between items-center mt-4 pt-4 border-t border-[var(--glass-border)]">
-                    <span class="text-xs text-[var(--text-secondary)]">Markdown suportado</span>
+                    <span class="text-xs text-[var(--text-secondary)]" id="noteStatus">Criando nova nota...</span>
                     <button onclick="saveNote()" class="px-4 py-2 rounded-lg bg-[var(--accent)]/20 border border-[var(--accent)]/40 text-xs font-medium active:scale-95 transition-transform">Salvar Nota</button>
                 </div>
             </div>
@@ -437,6 +485,8 @@
             radar: [75, 60, 82, 45, 90, 70],
             tracker: { serenity: 3, intensity: 40, productivity: 75 },
             notes: [],
+            currentNoteId: null,
+            accumulatedTips: [],
             tasks: [
                 { id: 1, title: 'Revisar contrato de parceria', deadline: 'Amanhã', priority: 'high', category: 'Finanças', done: false },
                 { id: 2, title: 'Preparar apresentação Q3', deadline: '3 dias', priority: 'medium', category: 'Estratégia', done: false },
@@ -509,6 +559,9 @@
                     if (!state.tracker) state.tracker = defaultState.tracker;
                     if (!state.profile) state.profile = defaultState.profile;
                     if (!state.theme) state.theme = defaultState.theme;
+                    if (!state.notes) state.notes = [];
+                    if (!state.accumulatedTips) state.accumulatedTips = [];
+                    if (state.currentNoteId === undefined) state.currentNoteId = null;
                 } catch (e) {
                     console.error('Failed to parse saved state');
                 }
@@ -735,6 +788,7 @@
             document.getElementById('moduleTitle').textContent = mod.title;
             document.getElementById('moduleSubtitle').textContent = mod.subtitle;
             document.getElementById('moduleContent').innerHTML = mod.content;
+            loadModuleTip(moduleId);
             navigateTo('erudition-module');
         }
 
@@ -890,21 +944,47 @@
         }
 
         // ==================== NOTES ====================
+        function newNote() {
+            state.currentNoteId = null;
+            document.getElementById('noteTitle').value = '';
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteStatus').textContent = 'Criando nova nota...';
+            document.getElementById('noteTitle').focus();
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
         function saveNote() {
             const title = document.getElementById('noteTitle').value.trim();
             const content = document.getElementById('noteContent').value.trim();
+            if (!content) {
+                showToast('Escreva algo antes de salvar.');
+                return;
+            }
 
-            if (!content) return;
+            if (state.currentNoteId) {
+                const note = state.notes.find(n => n.id === state.currentNoteId);
+                if (note) {
+                    note.title = title || 'Sem título';
+                    note.content = content;
+                    note.date = new Date().toLocaleDateString('pt-BR');
+                    note.timestamp = Date.now();
+                }
+                state.currentNoteId = null;
+                document.getElementById('noteStatus').textContent = 'Nota atualizada.';
+                showToast('Anotação atualizada com sucesso.');
+            } else {
+                const note = {
+                    id: Date.now(),
+                    title: title || 'Sem título',
+                    content: content,
+                    date: new Date().toLocaleDateString('pt-BR'),
+                    timestamp: Date.now()
+                };
+                state.notes.unshift(note);
+                document.getElementById('noteStatus').textContent = 'Nova nota criada.';
+                showToast('Nova anotação criada.');
+            }
 
-            const note = {
-                id: Date.now(),
-                title: title || 'Sem título',
-                content: content,
-                date: new Date().toLocaleDateString('pt-BR'),
-                timestamp: Date.now()
-            };
-
-            state.notes.unshift(note);
             document.getElementById('noteTitle').value = '';
             document.getElementById('noteContent').value = '';
             renderNotes();
@@ -913,23 +993,377 @@
 
         function renderNotes() {
             const container = document.getElementById('notesList');
+            if (state.notes.length === 0) {
+                container.innerHTML = '<div class="text-center text-sm text-[var(--text-secondary)] py-8">Nenhuma anotação registrada.<br>Use o editor acima para criar.</div>';
+                return;
+            }
             container.innerHTML = state.notes.map(n => `
-                <div class="glass-card rounded-xl p-4 cursor-pointer" onclick="editNote(${n.id})">
-                    <div class="font-medium mb-1">${n.title}</div>
-                    <div class="text-xs text-[var(--text-secondary)]">Modificado ${n.date}</div>
+                <div class="glass-card rounded-xl p-4 group">
+                    <div class="flex justify-between items-start mb-2 cursor-pointer" onclick="viewNote(${n.id})">
+                        <div class="font-medium pr-2">${n.title}</div>
+                        <div class="text-xs text-[var(--text-secondary)] whitespace-nowrap">${n.date}</div>
+                    </div>
+                    <div class="text-xs text-[var(--text-secondary)] line-clamp-2 mb-3 cursor-pointer" onclick="viewNote(${n.id})">${n.content.replace(/</g, '&lt;')}</div>
+                    <div class="flex gap-2">
+                        <button onclick="editNote(${n.id})" class="flex-1 glass-card rounded-lg py-1.5 text-xs text-[var(--accent-light)] active:scale-95 transition-transform">✏️ Editar</button>
+                        <button onclick="deleteNote(${n.id})" class="px-3 glass-card rounded-lg py-1.5 text-xs text-red-400 active:scale-95 transition-transform">🗑️</button>
+                    </div>
                 </div>
             `).join('');
+        }
+
+        function viewNote(id) {
+            const note = state.notes.find(n => n.id === id);
+            if (!note) return;
+            const content = `
+                <div class="glass-card rounded-2xl p-6 max-h-[70vh] overflow-y-auto custom-scroll">
+                    <h3 class="font-cinzel text-lg font-semibold mb-2">${note.title}</h3>
+                    <div class="text-xs text-[var(--text-secondary)] mb-4">${note.date}</div>
+                    <div class="text-sm leading-relaxed whitespace-pre-wrap mb-6">${note.content.replace(/</g, '&lt;')}</div>
+                    <div class="flex gap-2">
+                        <button onclick="closeModal(); setTimeout(()=>editNote(${note.id}), 300)" class="flex-1 glass-card glass-button rounded-xl p-3 text-[var(--accent-light)] text-sm">✏️ Editar</button>
+                        <button onclick="closeModal(); setTimeout(()=>deleteNote(${note.id}), 300)" class="flex-1 glass-card glass-button rounded-xl p-3 text-red-400 text-sm">🗑️ Excluir</button>
+                    </div>
+                </div>
+            `;
+            showModal(content);
         }
 
         function editNote(id) {
             const note = state.notes.find(n => n.id === id);
             if (!note) return;
-
+            state.currentNoteId = id;
             document.getElementById('noteTitle').value = note.title;
             document.getElementById('noteContent').value = note.content;
+            document.getElementById('noteStatus').textContent = 'Editando nota existente...';
+            document.getElementById('noteTitle').scrollIntoView({behavior: 'smooth', block: 'center'});
+            if (navigator.vibrate) navigator.vibrate(20);
+        }
+
+        function deleteNote(id) {
+            if (!confirm('Excluir esta anotação permanentemente?')) return;
             state.notes = state.notes.filter(n => n.id !== id);
+            if (state.currentNoteId === id) {
+                state.currentNoteId = null;
+                document.getElementById('noteTitle').value = '';
+                document.getElementById('noteContent').value = '';
+                document.getElementById('noteStatus').textContent = 'Criando nova nota...';
+            }
             renderNotes();
             salvarDados();
+            showToast('Anotação excluída.');
+        }
+
+        // ==================== DICAS DIÁRIAS DE ERUDIÇÃO ====================
+        const moduleTips = {
+            social: [
+                { source: "Leis do Poder", title: "Lei 1: Não ofusque o brilho do mestre", content: "Faça com que aqueles acima de você se sintam superiores. Em ambientes corporativos, posicione suas ideias como sugestões que permitem ao superior brilhar." },
+                { source: "Leis do Poder", title: "Lei 2: Nunca confie demais nos amigos", content: "Aprenda a usar os inimigos. Mantenha aliados próximos, mas nunca revele todas as suas cartas." },
+                { source: "Leis do Poder", title: "Lei 6: Chame atenção a qualquer preço", content: "Atenção é moeda de poder. Em redes sociais e reuniões, quem é notado primeiro controla a narrativa." },
+                { source: "Leis do Poder", title: "Lei 11: Mantenha os outros dependentes", content: "A independência do outro é sua fraqueza. Crie sistemas onde sua presença seja insubstituível." },
+                { source: "Leis do Poder", title: "Lei 14: Pose de amigo, aja como espião", content: "A informação é poder. Use conversas casuais para mapear intenções, alianças e fraquezas do grupo." },
+                { source: "Leis do Poder", title: "Lei 18: O isolamento é perigoso", content: "Fortalezas isoladas caem. Mantenha redes ativas; isolamento cerebral leva à obsolescência social." },
+                { source: "Leis do Poder", title: "Lei 24: Seja o cortesão perfeito", content: "A cortesia é armadura social. Quem domina a etiqueta de cada tribo pode transitar entre todas." },
+                { source: "Leis do Poder", title: "Lei 33: Descubra o ponto fraco", content: "Todo ser humano tem um âncora emocional. Identifique-a em silêncio; nunca a utilize publicamente." },
+                { source: "Leis do Poder", title: "Lei 43: Conquiste corações e mentes", content: "A coerção gera obediência temporária; a sedução gera lealdade permanente. Mire no coração." },
+                { source: "Estratégias de Guerra", title: "Estratégia 5: Evite o pensamento de grupo", content: "Grupos homogêneos tomam decisões ruins. Seja o dissidente construtivo ou o consultor externo." },
+                { source: "Estratégias de Guerra", title: "Estratégia 7: Transforme guerra em cruzada", content: "Pessoas lutam por ideais, não por ordens. Envolva sua equipe em uma narrativa maior que eles mesmos." },
+                { source: "Estratégias de Guerra", title: "Estratégia 13: Conheça o inimigo", content: "Mapeie redes de influência. Quem controla a informação informal controla o poder real da organização." },
+                { source: "Estratégias de Guerra", title: "Estratégia 27: A estratégia da aliança", content: "Pareça trabalhar pelos interesses alheios enquanto promove os seus. A aliança é camuflagem de avanço." },
+                { source: "Estratégias de Guerra", title: "Estratégia 30: Penetre nas mentes", content: "Comunicação é invasão sutil. Fale a linguagem do outro, use seus símbolos, conquiste por dentro." },
+                { source: "Arte da Sedução", title: "O Encantador", content: "Desvie o foco de si e coloque-o na vítima. Faça o outro se sentir a pessoa mais importante do mundo." },
+                { source: "Arte da Sedução", title: "A Coquete", content: "Mestre do puxa-e-empurra. Alterne calor e frieza para gerar insegurança produtiva no interlocutor." },
+                { source: "Arte da Sedução", title: "Fase 1: Escolha a Vítima Certa", content: "Não seduza aleatoriamente. Escolha alvos cujo poder social, capital ou posição amplifiquem o seu." },
+                { source: "Arte da Sedução", title: "Fase 1: Entre no Espírito Deles", content: "Espelhe valores, gostos e ritmos. A empatia fabricada é a porta de entrada para qualquer círculo." },
+                { source: "Leis do Poder", title: "Lei 19: Saiba com quem está lidando", content: "Não ofenda a pessoa errada. Mapeie o temperamento antes de qualquer confronto verbal." },
+                { source: "Leis do Poder", title: "Lei 38: Comporte-se como os outros", content: "Pense como quiser, mas vista a pele do grupo. O outsider intelectual é admirado, mas isolado." },
+                { source: "Estratégias de Guerra", title: "Estratégia 23: Fato e ficção", content: "Teça uma mistura contínua de verdade e mistério. Quem não sabe o que é real teme antecipadamente." },
+                { source: "Estratégias de Guerra", title: "Estratégia 32: Agressão passiva", content: "Domine enquanto parece se submeter. A vitória silenciosa não gera inimigos abertos." },
+                { source: "Arte da Sedução", title: "Fase 2: Envie Sinais Mistos", content: "Seja ao mesmo tempo acessível e distante. A ambiguidade mantém o outro em estado de alerta romântico." },
+                { source: "Arte da Sedução", title: "Fase 3: Misture Prazer com Dor", content: "Atenção intermitente cria vício. Alterne validação e retirada para quebrar resistências." }
+            ],
+            etiqueta: [
+                { source: "Leis do Poder", title: "Lei 5: Muito depende da reputação", content: "Guarde sua reputação com sua vida. Uma mancha leva anos para desaparecer; uma glória, segundos para se perder." },
+                { source: "Leis do Poder", title: "Lei 9: Vença por atitudes", content: "Nunca discuta. A vitória silenciosa, por meio de postura e timing, humilha mais que palavras." },
+                { source: "Leis do Poder", title: "Lei 24: Seja o cortesão perfeito", content: "A etiqueta é mapa de poder. Quem conhece os rituais de cada corte pode navegar entre todas." },
+                { source: "Leis do Poder", title: "Lei 34: Aja como um rei", content: "Seja real à sua própria maneira. A postura determina o tratamento; ande como se o mundo fosse seu." },
+                { source: "Leis do Poder", title: "Lei 37: Crie espetáculos atraentes", content: "A imagem é metade da mensagem. Crie apresentações visuais que fixem sua presença na memória alheia." },
+                { source: "Leis do Poder", title: "Lei 46: Nunca pareça perfeito demais", content: "A perfeição gera inveja. Mostre uma falha controlada para tornar-se acessível e, portanto, perigoso." },
+                { source: "Estratégias de Guerra", title: "Estratégia 10: Presença ameaçadora", content: "Crie uma presença que dissuada conflitos antes que eles comecem. O medo antecipado é vitória sem luta." },
+                { source: "Estratégias de Guerra", title: "Estratégia 25: Terreno moral elevado", content: "Ocupe a posição ética superior. Quem detém a moralidade pública controla o discurso." },
+                { source: "Arte da Sedução", title: "O Dândi", content: "Atrai por ambiguidade visual. Misture masculino e feminino, clássico e moderno; seja indefinível." },
+                { source: "Arte da Sedução", title: "A Estrela", content: "Baseie-se no mistério e distanciamento. Ofereça fuga da banalidade por meio de uma imagem etérea." },
+                { source: "Arte da Sedução", title: "Fase 1: Aproxime-se Indiretamente", content: "Crie uma falsa sensação de segurança. As melhores aproximações parecem acidentais." },
+                { source: "Arte da Sedução", title: "Fase 2: Preste Atenção aos Detalhes", content: "O detalhe é prova de interesse genuíno. Memorize preferências sutis e recite-as sem ser solicitado." },
+                { source: "Leis do Poder", title: "Lei 12: Honestidade seletiva", content: "Use a honestidade e generosidade para desarmar. Uma verdade estratégica vale mais que cem mentiras." },
+                { source: "Leis do Poder", title: "Lei 21: Faça-se de otário", content: "Pareça mais bobo que seu alvo. A subestimação é a melhor cobertura para observação profunda." },
+                { source: "Leis do Poder", title: "Lei 40: Despreze o almoço grátis", content: "O que vem fácil, desvaloriza. Pague o preço integral; quem aceita gratuidades aceita subordinação." },
+                { source: "Estratégias de Guerra", title: "Estratégia 4: Campo da morte", content: "Crie urgência e desespero. Quando a retirada é impossível, a criatividade floresce." },
+                { source: "Estratégias de Guerra", title: "Estratégia 16: Centro de gravidade", content: "Ateie fogo onde dói. Identifique o pilar emocional ou material do adversário e ameace-o sutilmente." },
+                { source: "Arte da Sedução", title: "Fase 2: Poetize Sua Presença", content: "Transforme o ordinário em simbólico. Um gesto simples, carregado de significado, vale mais que presentes caros." },
+                { source: "Arte da Sedução", title: "Fase 4: Use Atrativos Físicos", content: "O corpo é texto. Use proximidade, toque casual e olhar prolongado como pontuação de sedução." },
+                { source: "Leis do Poder", title: "Lei 35: Domine a arte do tempo", content: "Nunca mostre pressa. Quem espera o momento certo parece ter escolhido, não cedido." },
+                { source: "Leis do Poder", title: "Lei 47: Saiba a hora de parar", content: "Na vitória, pare. A insistência após o objetivo transforma herói em vilão." },
+                { source: "Estratégias de Guerra", title: "Estratégia 8: Economia perfeita", content: "Escolha batalhas com cuidado. Cada confronto gasta capital social; gaste apenas em vitórias certas." },
+                { source: "Arte da Sedução", title: "Fase 1: Crie Tentação", content: "Ofereça algo que o alvo deseja secretamente. A tentação bem construída parece ideia do próprio alvo." },
+                { source: "Arte da Sedução", title: "Fase 3: Use Atrativos Espirituais", content: "Eleve o interesse para o plano transcendental. Quem seduz a alma, possui o corpo indefinidamente." }
+            ],
+            vocabulario: [
+                { source: "Leis do Poder", title: "Lei 4: Diga menos do que o necessário", content: "A palavra é prata, o silêncio é ouro. Quem fala menos, parece mais profundo e controla o diálogo." },
+                { source: "Leis do Poder", title: "Lei 13: Apele para o egoísmo", content: "Ao pedir ajuda, nunca invoque gratidão. Mostre como o ato beneficia diretamente o outro." },
+                { source: "Leis do Poder", title: "Lei 27: Jogue com a necessidade de acreditar", content: "As pessoas precisam de narrativas. Forneça mitos que expliquem o mundo e elas seguirão cegamente." },
+                { source: "Leis do Poder", title: "Lei 32: Desperte fantasias", content: "A realidade é limitada; a fantasia é infinita. Fale em possibilidades, não em faturas." },
+                { source: "Estratégias de Guerra", title: "Estratégia 3: Presença de espírito", content: "Em turbulência, mantenha a calma. O contrapeso emocional é a mais rara das armas verbais." },
+                { source: "Estratégias de Guerra", title: "Estratégia 30: Penetre nas mentes", content: "A comunicação é infiltração. Use as palavras do adversário, seus medos, seus sonhos — e reconfigure-os." },
+                { source: "Arte da Sedução", title: "O Libertino", content: "Domine as palavras. O discurso bem construído é a mais poderosa das drogas afrodisíacas." },
+                { source: "Arte da Sedução", title: "Fase 2: Poder Demoníaco das Palavras", content: "Semee confusão deliberada. A ambiguidade verbal mantém o outro obcecado em decifrá-lo." },
+                { source: "Leis do Poder", title: "Lei 3: Oculte suas intenções", content: "Mantenha as pessoas na escuridão. Nunca revele o destino antes de chegar ao porto." },
+                { source: "Leis do Poder", title: "Lei 20: Não se comprometa", content: "A ambiguidade de posição é liberdade. Quem se define, se limita; quem se omite, domina." },
+                { source: "Leis do Poder", title: "Lei 31: Controle as opções", content: "Quem dá as cartas é você. Apresente alternativas onde todas favorecem seu objetivo oculto." },
+                { source: "Estratégias de Guerra", title: "Estratégia 15: Controle a dinâmica", content: "Induza o oponente a agir primeiro. Quem reage, gasta energia; quem induz, economiza." },
+                { source: "Estratégias de Guerra", title: "Estratégia 21: Guerra diplomática", content: "Negocie enquanto avança. A conversa é cortina de fumaça para o movimento real das peças." },
+                { source: "Arte da Sedução", title: "Fase 1: Domine a Arte da Insinuação", content: "Nunca diga tudo. A insinuação convida o outro a completar a história — e a se apaixonar por ela." },
+                { source: "Arte da Sedução", title: "Fase 2: Confunda Desejo e Realidade", content: "A ilusão perfeita é melhor que a realidade imperfeita. Construa narrativas que o outro queira habitar." },
+                { source: "Leis do Poder", title: "Lei 36: Ignorar é a melhor vingança", content: "Despreze o que não puder ter. A indiferença é a resposta mais cruel para quem busca atenção." },
+                { source: "Leis do Poder", title: "Lei 39: Agite as águas", content: "Crie confusão controlada. A turbulência revela quem sabe nadar e afoga os oportunistas." },
+                { source: "Estratégias de Guerra", title: "Estratégia 1: Polaridade", content: "Declare guerra aos seus inimigos. A polarização clara atrai aliados e expõe adversários." },
+                { source: "Estratégias de Guerra", title: "Estratégia 11: Não-ação", content: "Troque espaço por tempo. Às vezes, a ausência de resposta é a resposta mais eloquente." },
+                { source: "Arte da Sedução", title: "Fase 3: Prove a Si Mesmo", content: "Demonstre valor por meio de feitos, não palavras. A ação calada é o ápice da sedução." },
+                { source: "Arte da Sedução", title: "Fase 4: Cuidado com Aftereffects", content: "A sedução bem-sucedida exige distanciamento gradual. A proximidade excessiva apaga o mistério." },
+                { source: "Leis do Poder", title: "Lei 44: Efeito espelho", content: "Desarme e enfureça imitando o adversário. A cópia perfeita é insulto silencioso e desarmamento total." },
+                { source: "Estratégias de Guerra", title: "Estratégia 29: Fato consumado", content: "Dê pequenas mordidas. Faça mudanças irreversíveis em doses que não justifiquem reação." },
+                { source: "Arte da Sedução", title: "O Carismático", content: "A confiança inabalável atrai. Fale como se o mundo já concordasse com você — e ele concordará." }
+            ],
+            escrita: [
+                { source: "Leis do Poder", title: "Lei 25: Recrie-se", content: "Não seja prisioneiro de uma imagem. Reinvente-se periodicamente; a novidade é poder." },
+                { source: "Leis do Poder", title: "Lei 30: Faça conquistas parecerem fáceis", content: "Oculte o suor. O esforço invisível cria aura de gênio; o esforço ostentado, de vulgaridade." },
+                { source: "Leis do Poder", title: "Lei 37: Crie espetáculos", content: "A escrita é teatro mental. Crie cenas que o leitor possa ver, ouvir e sentir na pele." },
+                { source: "Estratégias de Guerra", title: "Estratégia 2: Guerra de guerrilha da mente", content: "Não lute a última guerra. Cada texto deve ser inédito em forma, mesmo que clássico em fundo." },
+                { source: "Estratégias de Guerra", title: "Estratégia 12: Grande estratégia", content: "Perca batalhas, mas vença a guerra. Um parágrafo ruim não importa se o artigo é memorável." },
+                { source: "Estratégias de Guerra", title: "Estratégia 23: Fato e ficção", content: "Teça mistura de realidade e invenção. O texto que parece relatório, mas é construção, domina." },
+                { source: "Arte da Sedução", title: "O Amante Ideal", content: "Observe o que falta na vida do leitor e ofereça exatamente isso. A escrita é amor idealizado." },
+                { source: "Arte da Sedução", title: "Fase 2: Poetize Sua Presença", content: "Transforme o ordinário em metáfora. O café da manhã, bem descrito, torna-se ritual de civilização." },
+                { source: "Leis do Poder", title: "Lei 4: Economia verbal", content: "Elimine adjetivos redundantes. 'Muito bom' é redundante. Escolha: 'bom' ou 'excepcional'." },
+                { source: "Leis do Poder", title: "Lei 28: Entre em ação com ousadia", content: "A timidez textual é suicídio literário. Comece com impacto; o meio se ajusta ao início forte." },
+                { source: "Leis do Poder", title: "Lei 41: Evite seguir pegadas", content: "Não imite grandes escritores. Aprenda com eles, depois queime os manuscritos e escreva seu fogo." },
+                { source: "Estratégias de Guerra", title: "Estratégia 6: Caos controlado", content: "Segmente suas forças. Divida o texto em unidades autônomas que possam sobreviver isoladas." },
+                { source: "Estratégias de Guerra", title: "Estratégia 17: Dividir para conquistar", content: "Derrote-os em partes. Cada capítulo deve ser um gancho; cada parágrafo, uma armadilha." },
+                { source: "Arte da Sedução", title: "Fase 1: Crie Necessidade", content: "Desperte ansiedade e descontentamento. Mostre ao leitor que algo essencial lhe falta — e você tem." },
+                { source: "Arte da Sedução", title: "Fase 2: Ilusão Perfeita", content: "Confunda desejo e realidade. O texto deve criar um mundo que o leitor prefira ao seu próprio." },
+                { source: "Leis do Poder", title: "Lei 8: Faça as pessoas virem até você", content: "Use isca. Títulos provocativos, aberturas em aberto — force o leitor a investir atenção." },
+                { source: "Leis do Poder", title: "Lei 22: Fraqueza em poder", content: "A tática da rendição. Mostre vulnerabilidade estratégica para desarmar o leitor-supervisor." },
+                { source: "Estratégias de Guerra", title: "Estratégia 19: Aniquilação", content: "Envolva o inimigo. Cercar um argumento por todos os lados deixa o adversário sem saída verbal." },
+                { source: "Estratégias de Guerra", title: "Estratégia 24: Ordinário-extraordinário", content: "Tome a linha da menor expectativa. O texto simples que explode em complexidade é inesquecível." },
+                { source: "Arte da Sedução", title: "Fase 3: Transgressor e Tabu", content: "Desperte o proibido. O leitor secreto ama o que a sociedade odeia — leve-o lá com elegância." },
+                { source: "Arte da Sedução", title: "Fase 4: Movimento Ousado", content: "Domine a arte do movimento ousado. A conclusão deve ser um evento, não um simples fechamento." },
+                { source: "Leis do Poder", title: "Lei 45: Reforme gradualmente", content: "Pregue mudança, mas reforme devagar. Textos radicais são fechados; textos graduais, adotados." },
+                { source: "Estratégias de Guerra", title: "Estratégia 33: Reação em cadeia", content: "Semeie incerteza. Um texto que perturba a certeza do leitor gera obsessão e dependência." },
+                { source: "Arte da Sedução", title: "A Sereia", content: "A fantasia de liberação. Escreva como quem oferece ao leitor uma passagem para outro mundo." }
+            ],
+            fala: [
+                { source: "Leis do Poder", title: "Lei 4: Diga menos do que o necessário", content: "Em reuniões, fale 20% do tempo e observe 80%. Quem fala menos, controla mais." },
+                { source: "Leis do Poder", title: "Lei 9: Vença por atitudes", content: "Nunca discuta. A vitória por postura e timing humilha mais que qualquer argumento." },
+                { source: "Leis do Poder", title: "Lei 13: Apele para o egoísmo", content: "Ao falar, mostre como sua proposta beneficia o ouvinte. O interesse próprio é o único ouvido universal." },
+                { source: "Leis do Poder", title: "Lei 28: Entre em ação com ousadia", content: "Fale 20% mais devagar que o normal. A velocidade transmite ansiedade; a lentidão, autoridade." },
+                { source: "Estratégias de Guerra", title: "Estratégia 1: Polaridade", content: "Declare guerra aos seus inimigos. A fala polarizada atrai aliados e expõe adversários." },
+                { source: "Estratégias de Guerra", title: "Estratégia 14: Blitzkrieg", content: "Sobrepuje com velocidade e crueza. A fala rápida e precisa deixa o adversário sem reação." },
+                { source: "Arte da Sedução", title: "O Carismático", content: "A confiança inabalável emana de dentro. Fale como se o mundo já concordasse — e ele concordará." },
+                { source: "Arte da Sedução", title: "Fase 1: Domine a Arte da Insinuação", content: "Nunca diga tudo em voz alta. A insinuação convida o ouvinte a completar — e se apaixonar pela própria conclusão." },
+                { source: "Arte da Sedução", title: "Fase 2: Poder Demoníaco das Palavras", content: "Semee confusão com palavras. A ambiguidade verbal mantém o outro obcecado em decifrá-lo." },
+                { source: "Leis do Poder", title: "Lei 27: Jogue com a necessidade de acreditar", content: "As pessoas precisam de narrativas. Forneça mitos convincentes e elas seguirão cegamente." },
+                { source: "Leis do Poder", title: "Lei 32: Desperte fantasias", content: "Fale em possibilidades, não em obrigações. A fantasia mobiliza mais que a realidade." },
+                { source: "Estratégias de Guerra", title: "Estratégia 7: Cruzada", content: "Transforme sua fala em cruzada. Pessoas lutam por ideais, não por ordens." },
+                { source: "Estratégias de Guerra", title: "Estratégia 21: Guerra diplomática", content: "Negocie enquanto avança na conversa. A fala é cortina para o movimento real." },
+                { source: "Arte da Sedução", title: "Fase 3: Prove a Si Mesmo", content: "Demonstre valor por meio de discurso, não autopromoção. A modéstia performática é o ápice." },
+                { source: "Leis do Poder", title: "Lei 6: Chame atenção", content: "Atenção é moeda. Em qualquer sala, quem é notado primeiro controla a narrativa." },
+                { source: "Leis do Poder", title: "Lei 20: Não se comprometa", content: "A ambiguidade verbal é liberdade. Quem se define em palavras, se limita em ações." },
+                { source: "Estratégias de Guerra", title: "Estratégia 18: Manobra de flanco", content: "Exponha o flanco vulnerável do oponente. Use perguntas laterais para expor fraquezas." },
+                { source: "Estratégias de Guerra", title: "Estratégia 30: Penetre nas mentes", content: "Fale a linguagem do adversário. Use seus símbolos, seus medos, seus sonhos — e reconfigure-os." },
+                { source: "Arte da Sedução", title: "Fase 1: Envie Sinais Mistos", content: "Seja acessível e distante. A ambiguidade na fala mantém o interlocutor em alerta romântico." },
+                { source: "Arte da Sedução", title: "Fase 4: Dê-lhes Espaço para Cair", content: "O perseguidor é perseguido. Fale o suficiente para provocar, depois recue e observe a caça." },
+                { source: "Leis do Poder", title: "Lei 35: Domine o tempo", content: "Nunca mostre pressa na fala. Quem espera o momento certo parece ter escolhido, não cedido." },
+                { source: "Leis do Poder", title: "Lei 43: Conquiste corações", content: "A coerção gera obediência temporária; a sedução verbal gera lealdade permanente." },
+                { source: "Estratégias de Guerra", title: "Estratégia 26: Estratégia do vazio", content: "Negue alvos verbais. A ausência de posição clara frustra e desarma o adversário." },
+                { source: "Arte da Sedução", title: "O Encantador", content: "Desvie o foco de si. Faça o outro se sentir a pessoa mais importante da conversa." }
+            ],
+            postura: [
+                { source: "Leis do Poder", title: "Lei 5: Reputação", content: "A postura é metade da reputação. Ande como se o mundo fosse seu e ele começará a acreditar." },
+                { source: "Leis do Poder", title: "Lei 16: Use a ausência", content: "A ausência aumenta o respeito. Não esteja sempre disponível; a escassez cria valor." },
+                { source: "Leis do Poder", title: "Lei 25: Recrie-se", content: "Mude sua imagem periodicamente. A novidade visual é poder; a previsibilidade, prisão." },
+                { source: "Leis do Poder", title: "Lei 34: Aja como um rei", content: "A postura determina o tratamento. Vista-se 10% mais formal que o ambiente exige." },
+                { source: "Leis do Poder", title: "Lei 37: Espetáculos", content: "O corpo é palco. Crie uma presença visual que fixe sua imagem na memória alheia." },
+                { source: "Estratégias de Guerra", title: "Estratégia 10: Presença ameaçadora", content: "Crie uma postura que dissuada conflitos. O medo antecipado é vitória sem luta." },
+                { source: "Arte da Sedução", title: "O Dândi", content: "Atrai por ambiguidade visual. Misture masculino e feminino, clássico e moderno." },
+                { source: "Arte da Sedução", title: "A Estrela", content: "Baseie-se no mistério. Ofereça fuga da banalidade por meio de uma imagem etérea." },
+                { source: "Arte da Sedução", title: "Fase 1: Aproxime-se Indiretamente", content: "A melhor aproximação física parece acidental. O toque casual vale mais que o planejado." },
+                { source: "Arte da Sedução", title: "Fase 2: Preste Atenção aos Detalhes", content: "O detalhe de postura é prova de refinamento. A forma como segura um copo revela classe." },
+                { source: "Leis do Poder", title: "Lei 17: Imprevisibilidade", content: "Cultive um ar de imprevisibilidade. Quem não pode ser lido, não pode ser contra-atacado." },
+                { source: "Leis do Poder", title: "Lei 29: Planeje até o fim", content: "Cada gesto deve ter propósito. A postura casual mais poderosa é aquela ensaiada mil vezes." },
+                { source: "Leis do Poder", title: "Lei 46: Nunca pareça perfeito", content: "Mostre uma falha controlada na postura. A perfeição gera inveja; a pequena fraqueza, aproximação." },
+                { source: "Estratégias de Guerra", title: "Estratégia 4: Campo da morte", content: "Crie urgência. A postura de quem não tem alternativa é a mais convincente de todas." },
+                { source: "Estratégias de Guerra", title: "Estratégia 9: Crie presença", content: "A presença física é dissuasão. Ocupe espaço, mova-se devagar, marque território sem agressão." },
+                { source: "Arte da Sedução", title: "Fase 2: Poetize Presença", content: "Transforme o ordinário em simbólico. Como você senta, como olha, como espera — tudo é texto." },
+                { source: "Arte da Sedução", title: "Fase 3: Atrativos Espirituais", content: "Eleve o interesse para o plano transcendental. A postura ereta e olhar distante seduzem almas." },
+                { source: "Leis do Poder", title: "Lei 12: Generosidade seletiva", content: "Use gestos de honestidade para desarmar. Um movimento genuíno em meio à estratégia é desarmante." },
+                { source: "Leis do Poder", title: "Lei 21: Faça-se de otário", content: "A postura submissa é cobertura. Quem parece inofensivo, observa sem ser observado." },
+                { source: "Estratégias de Guerra", title: "Estratégia 20: Amadurecimento", content: "Manobre o inimigo em direção à fraqueza. A postura de quem recua estrategicamente engana." },
+                { source: "Arte da Sedução", title: "Fase 1: Pareça Objeto de Desejo", content: "Crie triângulos. A presença de um rival invisível aumenta seu valor social instantaneamente." },
+                { source: "Arte da Sedução", title: "Fase 4: Atrativos Físicos", content: "O corpo é texto. Use proximidade, toque casual e olhar prolongado como pontuação." },
+                { source: "Leis do Poder", title: "Lei 38: Comporte-se como os outros", content: "Vista a pele do grupo. O outsider intelectual é admirado, mas o integrado é promovido." },
+                { source: "Estratégias de Guerra", title: "Estratégia 31: Front interno", content: "Destrua por dentro. A postura de aliado é a mais eficaz para sabotagem silenciosa." }
+            ],
+            habitos: [
+                { source: "Leis do Poder", title: "Lei 9: Vença por atitudes", content: "A disciplina é atitude, não discurso. Quem age diariamente vence quem planeja eternamente." },
+                { source: "Leis do Poder", title: "Lei 15: Esmague completamente", content: "Não deixe resíduos de mau hábito. A mudança parcial é derrota garantida; a total, vitória." },
+                { source: "Leis do Poder", title: "Lei 22: Fraqueza em poder", content: "Transforme fraqueza em poder. O hábito de rendição estratégica é avanço disfarçado." },
+                { source: "Leis do Poder", title: "Lei 23: Concentre as suas forças", content: "Foco absoluto em poucos hábitos. A dispersão de energia é o inimigo número um da soberania." },
+                { source: "Leis do Poder", title: "Lei 28: Entre em ação com ousadia", content: "A timidez inicial é suicídio do hábito. Comece com impacto; o meio se ajusta ao início forte." },
+                { source: "Estratégias de Guerra", title: "Estratégia 2: Guerra de guerrilha", content: "Não lute a última guerra mental. Cada ciclo de hábito deve ser inédito em forma." },
+                { source: "Estratégias de Guerra", title: "Estratégia 4: Campo da morte", content: "Crie urgência. Quando a retirada é impossível, a disciplina floresce naturalmente." },
+                { source: "Arte da Sedução", title: "O Natural", content: "A espontaneidade é hábito refinado. Quem parece natural, treinou até a exaustão." },
+                { source: "Arte da Sedução", title: "Fase 1: Crie Necessidade", content: "Desperte ansiedade e descontentamento. O hábito nasce da percepção de que algo falta." },
+                { source: "Arte da Sedução", title: "Fase 3: Prove a Si Mesmo", content: "Demonstre valor por meio de disciplina, não palavras. A constância é prova de poder." },
+                { source: "Leis do Poder", title: "Lei 3: Oculte intenções", content: "Não anuncie seus hábitos. A prática silenciosa é mais poderosa que a declaração pública." },
+                { source: "Leis do Poder", title: "Lei 11: Mantenha dependentes", content: "Crie sistemas onde sua disciplina seja insubstituível. Dependência é poder sustentável." },
+                { source: "Leis do Poder", title: "Lei 18: Isolamento é perigoso", content: "Hábitos isolados morrem. Integre práticas à rede social; a accountability é cola." },
+                { source: "Estratégias de Guerra", title: "Estratégia 8: Economia perfeita", content: "Escolha batalhas com cuidado. Cada hábito deve ter ROI claro; descarte o resto." },
+                { source: "Estratégias de Guerra", title: "Estratégia 11: Não-ação", content: "Troque espaço por tempo. Às vezes, não fazer é o hábito mais poderoso." },
+                { source: "Arte da Sedução", title: "Fase 2: Desarme por Vulnerabilidade", content: "Mostre fraqueza estratégica. O hábito de humildade calculada desarma competidores." },
+                { source: "Leis do Poder", title: "Lei 29: Planeje até o fim", content: "Cada hábito deve ter propósito de longo prazo. Quem não sabe o porquê, desiste no primeiro obstáculo." },
+                { source: "Leis do Poder", title: "Lei 40: Despreze o almoço grátis", content: "O que vem fácil, desvaloriza. Pague o preço integral da disciplina; aceite gratuidades de ninguém." },
+                { source: "Estratégias de Guerra", title: "Estratégia 12: Grande estratégia", content: "Perca batalhas, mas vença a guerra. Um dia ruim não importa se o ano é memorável." },
+                { source: "Estratégias de Guerra", title: "Estratégia 22: Saída", content: "Saiba como terminar. Todo hábito deve ter critério de término; o infinito gera rebelião." },
+                { source: "Arte da Sedução", title: "Fase 3: Misture Prazer com Dor", content: "Atenção intermitente ao hábito cria vício. Alterne intensidade e descanso para fixação." },
+                { source: "Arte da Sedução", title: "Fase 4: Cuidado com Aftereffects", content: "A disciplina bem-sucedida exige distanciamento gradual. A obsessão apaga o propósito." },
+                { source: "Leis do Poder", title: "Lei 47: Saiba parar", content: "Na vitória do hábito, pare. A insistência após o objetivo transforma virtude em vício." },
+                { source: "Estratégias de Guerra", title: "Estratégia 17: Dividir para conquistar", content: "Derrote o hábito em partes. Cada micro-prática deve ser um gancho; cada dia, uma armadilha." }
+            ],
+            rotina: [
+                { source: "Leis do Poder", title: "Lei 17: Imprevisibilidade", content: "Cultive um ar de imprevisibilidade na rotina. A mesmice é prisão; a variação controlada, poder." },
+                { source: "Leis do Poder", title: "Lei 23: Concentre forças", content: "Foco absoluto. A rotina dispersa é o inimigo número um da soberania." },
+                { source: "Leis do Poder", title: "Lei 29: Planeje até o fim", content: "Cada dia deve ter propósito de longo prazo. Quem não sabe o porquê, desiste na primeira turbulência." },
+                { source: "Leis do Poder", title: "Lei 35: Domine o tempo", content: "Nunca mostre pressa. Quem espera o momento certo na rotina parece ter escolhido, não sofrido." },
+                { source: "Leis do Poder", title: "Lei 47: Saiba parar", content: "Na vitória da rotina, pare. A insistência após o objetivo transforma método em mania." },
+                { source: "Estratégias de Guerra", title: "Estratégia 8: Economia perfeita", content: "Escolha batalhas diárias com cuidado. Cada minuto deve ter ROI claro; descarte o resto." },
+                { source: "Estratégias de Guerra", title: "Estratégia 12: Grande estratégia", content: "Perca batalhas, mas vença a guerra. Um dia ruim na rotina não importa se o trimestre é memorável." },
+                { source: "Estratégias de Guerra", title: "Estratégia 22: Saída", content: "Saiba como terminar a rotina. Todo ciclo deve ter critério de término; o infinito gera rebelião." },
+                { source: "Arte da Sedução", title: "O Natural", content: "A espontaneidade é rotina refinada. Quem parece natural, treinou até a exaustão." },
+                { source: "Arte da Sedução", title: "Fase 1: Escolha a Vítima Certa", content: "Não desperdice rotina em objetivos aleatórios. Escolha metas cujo poder amplifique o seu." },
+                { source: "Leis do Poder", title: "Lei 7: Faça outros trabalharem", content: "Delegue o que não é essencial. Sua rotina deve conter apenas o que só você pode fazer." },
+                { source: "Leis do Poder", title: "Lei 10: Evite o infeliz", content: "Contágio: evite o azarado. A rotina de quem convive com derrotados tende à derrota." },
+                { source: "Leis do Poder", title: "Lei 16: Use a ausência", content: "A ausência aumenta o respeito. Não preencha todos os dias; a escassez cria valor." },
+                { source: "Estratégias de Guerra", title: "Estratégia 3: Contrapeso", content: "Em turbulência, mantenha a calma. A rotina é âncora emocional em tempos de caos." },
+                { source: "Estratégias de Guerra", title: "Estratégia 15: Controle a dinâmica", content: "Induza o dia a fluir primeiro. Quem reage, gasta energia; quem induz, economiza." },
+                { source: "Arte da Sedução", title: "Fase 2: Mantenha-os em Suspeito", content: "Varie a rotina. O que vem a seguir? A previsibilidade mata o interesse próprio." },
+                { source: "Leis do Poder", title: "Lei 19: Saiba com quem lida", content: "Mapeie o temperamento do dia. Nem todas as horas são iguais; trate cada uma como pessoa diferente." },
+                { source: "Leis do Poder", title: "Lei 31: Controle as opções", content: "Apresente alternativas onde todas favorecem seu objetivo. A rotina é escolha ilusória." },
+                { source: "Estratégias de Guerra", title: "Estratégia 13: Conheça o inimigo", content: "Mapeie seus pontos baixos do dia. Quando você é fraco, o inimigo (procrastinação) ataca." },
+                { source: "Estratégias de Guerra", title: "Estratégia 16: Centro de gravidade", content: "Ateie fogo onde dói na rotina. Identifique o pilar do seu dia e proteja-o com a vida." },
+                { source: "Arte da Sedução", title: "Fase 3: Provoque Regressão", content: "Volte ao básico periodicamente. A rotina complexa precisa de reinício infantil para sobreviver." },
+                { source: "Arte da Sedução", title: "Fase 4: Dê Espaço para Cair", content: "O perseguidor é perseguido. Não force a rotina; crie espaço para que ela seja desejada." },
+                { source: "Leis do Poder", title: "Lei 36: Ignorar é vingança", content: "Despreze o que não puder controlar na rotina. A indiferença é a resposta mais produtiva." },
+                { source: "Estratégias de Guerra", title: "Estratégia 28: Supremacia", content: "Dê corda suficiente para o dia se organizar. A rotina que se impõe demais, se quebra." }
+            ]
+        };
+
+        function getDailyTip(moduleId) {
+            const tips = moduleTips[moduleId];
+            if (!tips || tips.length === 0) return null;
+            const dayOfYear = Math.floor((new Date() - new Date(new Date().getFullYear(), 0, 0)) / 1000 / 60 / 60 / 24);
+            return tips[dayOfYear % tips.length];
+        }
+
+        function loadModuleTip(moduleId) {
+            window.currentModule = moduleId;
+            const tip = getDailyTip(moduleId);
+            const container = document.getElementById('moduleDailyTip');
+            if (!tip) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            document.getElementById('tipDate').textContent = new Date().toLocaleDateString('pt-BR');
+            document.getElementById('tipContent').innerHTML = `
+                <div class="text-xs text-[var(--accent-light)] font-semibold mb-1">${tip.source}</div>
+                <div class="font-medium mb-2">${tip.title}</div>
+                <p class="text-sm text-[var(--text-secondary)] leading-relaxed">${tip.content}</p>
+            `;
+            window.currentModuleTip = { ...tip, module: moduleId };
+            renderAccumulatedTips(moduleId);
+        }
+
+        function addTipToNotes() {
+            if (!window.currentModuleTip) return;
+            const tip = window.currentModuleTip;
+            const noteContent = `# ${tip.title}
+
+**Fonte:** ${tip.source} • **Módulo:** ${tip.module}
+
+${tip.content}
+
+---
+*Adicionado em ${new Date().toLocaleDateString('pt-BR')}*
+*Via Dica do Dia — Forty-eight Kings*`;
+            const note = {
+                id: Date.now(),
+                title: `Dica: ${tip.title}`,
+                content: noteContent,
+                date: new Date().toLocaleDateString('pt-BR'),
+                timestamp: Date.now()
+            };
+            state.notes.unshift(note);
+            salvarDados();
+            if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+            showToast('💡 Dica adicionada às anotações');
+        }
+
+        function accumulateTip() {
+            if (!window.currentModuleTip) return;
+            const tip = { ...window.currentModuleTip, accumulatedAt: Date.now(), id: Date.now() };
+            const exists = state.accumulatedTips.some(t => t.title === tip.title && t.module === tip.module);
+            if (exists) {
+                showToast('Esta dica já foi acumulada.');
+                return;
+            }
+            state.accumulatedTips.unshift(tip);
+            salvarDados();
+            renderAccumulatedTips(tip.module);
+            if (navigator.vibrate) navigator.vibrate([50, 100, 50]);
+            showToast('📚 Dica acumulada no grimório');
+        }
+
+        function renderAccumulatedTips(moduleId) {
+            const container = document.getElementById('accumulatedTipsList');
+            const tips = state.accumulatedTips.filter(t => t.module === moduleId);
+            document.getElementById('accumulatedCount').textContent = tips.length + ' guardadas';
+            if (tips.length === 0) {
+                container.innerHTML = '<div class="text-xs text-[var(--text-secondary)] text-center py-4">Nenhuma dica acumulada neste módulo. Pressione "Acumular" na dica do dia para guardar.</div>';
+                return;
+            }
+            container.innerHTML = tips.map(t => `
+                <div class="glass-card rounded-lg p-3 tip-accumulated">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="text-xs text-[var(--accent-light)] font-semibold">${t.source}</span>
+                        <button onclick="removeAccumulatedTip(${t.id})" class="text-red-400 text-xs px-1">✕</button>
+                    </div>
+                    <div class="font-medium text-sm mb-1">${t.title}</div>
+                    <p class="text-xs text-[var(--text-secondary)] line-clamp-2">${t.content}</p>
+                </div>
+            `).join('');
+        }
+
+        function removeAccumulatedTip(id) {
+            state.accumulatedTips = state.accumulatedTips.filter(t => t.id !== id);
+            salvarDados();
+            renderAccumulatedTips(window.currentModule);
+            showToast('Dica removida.');
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
         }
 
         // ==================== FINANCE ====================
@@ -1214,5 +1648,6 @@
             });
         }
     </script>
+    <div class="toast" id="toast"></div>
 </body>
 </html>
